@@ -1,9 +1,9 @@
-const Tito    = require('../core/tito')
-const Winston = require('winston')
+const Tito   = require('../core/tito')
+const logger = require('../utility/logger')
 
 exports.seed = (database) => {
   return function (request, reply) {
-    Winston.info('Tito Seed Called')
+    logger.info('Tito Seed Called')
     Tito.getTickets(database, reply)
   }
 }

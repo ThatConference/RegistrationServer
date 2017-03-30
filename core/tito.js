@@ -1,5 +1,5 @@
-const Winston = require('winston')
 const Request = require('request')
+const logger  = require('../utility/logger')
 
 let options = {
   url: '',
@@ -17,7 +17,7 @@ exports.getTickets = (database, callback) => {
   options.url = `https://${process.env.TITO_API_HOST}${process.env.TITO_API_PATH}`
 
   Request(options, (error, response, body) => {
-    Winston.debug(`Tito Returned: \r\n ${body}`)
+    logger.debug(`Tito Returned: \r\n ${body}`)
 
     const tickets = JSON.parse(body)
     database.add(tickets)

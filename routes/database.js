@@ -1,8 +1,8 @@
-const Winston = require('winston')
+const logger = require('../utility/logger')
 
 exports.destroy = (database) => {
   return function (request, reply) {
-    Winston.info('Database Destroy Called')
+    logger.info('Database Destroy Called')
     database.destroy()
     reply('destroyed')
   }

@@ -1,9 +1,10 @@
 require('dotenv').config()
 
-const Hapi     = require('hapi');
-const Winston  = require('winston')
-const Firebase = require('firebase')
-const database = require('./core/database')
+const Hapi              = require('hapi');
+const Firebase          = require('firebase')
+const logger            = require('./utility/logger')
+const database          = require('./core/database')
+const databaseListeners = require('./core/databaseEventListeners')
 
 //firebase config
 const firebaseConfig = {
@@ -16,6 +17,7 @@ const firebaseConfig = {
 
 Firebase.initializeApp(firebaseConfig);
 const db = new database(Firebase)
+databaseListeners(Firebase)
 
 const server = new Hapi.Server()
 const port = Number(process.env.PORT || 8000)
@@ -29,11 +31,11 @@ server.route(require('./routes')(db))
 exports.listen = () => {
   server.start( (err) => {
     if (err) {
-      Winston.error(`Http server start error: ${err}`)
+      logger.error(`Http server start error: ${err}`)
       throw err
     }
 
-    Winston.info(`Http server listening on http://localhost:${port}`)
+    logger.info(`Http server listening on http://localhost:${port}`)
   })
 }
 

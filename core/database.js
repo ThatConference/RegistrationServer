@@ -1,54 +1,9 @@
-const Winston  = require('winston')
+const logger = require('../utility/logger')
 
 class Database {
   constructor(firebase) {
     this.firebase = firebase
     this.ticketsDB = this.firebase.database().ref("Tickets")
-
-    /*
-      This  event runs everytime the process is started
-    */
-    this.ticketsDB.on('child_added', (postSnapshot) => {
-      const postReference = postSnapshot.ref
-      const uid = postSnapshot.val().uid
-      const postId = postSnapshot.key
-      Winston.info(`added: ${postId}`)
-
-      // Add a value listener to this event
-      postReference.child("checkedIn").on('value', (isCheckedIn) => {
-        Winston.info(`checkedIn value has changed for ${postId} now ${isCheckedIn.val()}`)
-        if(isCheckedIn.val()){
-
-          /*
-            TODO
-
-            ? this could prolly just happen on the changed event
-            ** Needs to be wrapped in a transaction.
-
-            1. Call tito and check in user.
-            2. Call that conference and add user record to it.
-            3. Move record from here to another DB of checked in users with additional data?
-          */
-
-          Winston.info(`call tito and check in user`)
-        }
-      })
-    })
-
-    this.ticketsDB.on('child_changed', (postSnapshot) => {
-      const postReference = postSnapshot.ref;
-      const rowKey = postSnapshot.key;
-      Winston.info(`row key: ${rowKey} changed`)
-      Winston.info(`name on ticket: ${postSnapshot.val().ticket.attributes.name}`)
-
-    })
-
-    this.ticketsDB.on('child_removed', (postSnapshot) => {
-      const postReference = postSnapshot.ref;
-      const uid = postSnapshot.val().uid;
-      const postId = postSnapshot.key;
-      Winston.info(`removed: ${postId}`)
-    })
   }
 
   add(tickets){
@@ -72,7 +27,6 @@ class Database {
 }
 
 module.exports = Database
-
 
 //
 // function () {
