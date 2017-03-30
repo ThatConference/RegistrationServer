@@ -1,0 +1,28 @@
+{
+  "name": "ThatRegistrationServer",
+  "version": "0.0.1",
+  "description": "That Conference Registration Server",
+  "main": "server.js",
+  "author": "Clark Sell",
+  "license": "Apache V2",
+  "engines": {
+    "node": ">=6.5"
+  },
+  "dependencies": {
+    "dotenv": "^4.0.0",
+    "firebase": "^3.7.4",
+    "hapi": "^16.1.0",
+    "request": "^2.81.0",
+    "request-promise-native": "^1.0.3",
+    "winston": "^2.3.1"
+  },
+  "devDependencies": {
+    "standard": "^9.0.1",
+    "tap": "^10.3.0"
+  },
+  "scripts": {
+    "start": "node ./server.js --start",
+    "pretest": "standard",
+    "test": "tap tests/**/*.js"
+  }
+}
