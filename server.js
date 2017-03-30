@@ -1,12 +1,14 @@
 require('dotenv').config()
 
 const Hapi              = require('hapi');
-const Firebase          = require('firebase')
+
 const logger            = require('./utility/logger')
+const firebase          = require('./utility/firebase')
 const database          = require('./core/database')
 const databaseListeners = require('./core/databaseEventListeners')
 
-//firebase config
+const Firebase = require('firebase')
+
 const firebaseConfig = {
   apiKey:            process.env.FIREBASE_API_KEY       || '<API_KEY>',
   authDomain:        process.env.FIREBASE_PROJECT_ID    || '<PROJECT_ID>.firebaseapp.com',
@@ -15,9 +17,11 @@ const firebaseConfig = {
   messagingSenderId: process.env.MESSAGING_SENDER_ID    || '<ID>'
 }
 
-Firebase.initializeApp(firebaseConfig);
-const db = new database(Firebase)
-databaseListeners(Firebase)
+Firebase.initializeApp(firebaseConfig)
+let fb = Firebase.database()
+
+//start the event listeners
+databaseListeners(fb)
 
 const server = new Hapi.Server()
 const port = Number(process.env.PORT || 8000)
@@ -26,7 +30,7 @@ server.connection({
 })
 
 //Register our routes
-server.route(require('./routes')(db))
+server.route(require('./routes')(database(fb)))
 
 exports.listen = () => {
   server.start( (err) => {
@@ -43,7 +47,6 @@ exports.close = (next) => {
   server.stop(next)
 }
 
-const shouldStart = process.argv.find((n) => n === '--start')
-if (shouldStart) {
-  exports.listen()
+if (require.main === module) {
+    exports.listen()
 }

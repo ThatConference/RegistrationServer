@@ -21,7 +21,7 @@
     "tap": "^10.3.0"
   },
   "scripts": {
-    "start": "node ./server.js --start",
+    "start": "node ./server.js",
     "pretest": "standard",
     "test": "tap tests/**/*.js"
   }

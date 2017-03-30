@@ -1,9 +1,9 @@
 const logger = require('../utility/logger')
 
-module.exports = (firebase) => {
+module.exports = (database) => {
   logger.info(`starting db listeners`)
 
-  let ticketsDB = firebase.database().ref("Tickets")
+  let ticketsDB = database.ref("Tickets")
 
   /*
     This  event runs everytime the process is started

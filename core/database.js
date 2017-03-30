@@ -1,32 +1,73 @@
 const logger = require('../utility/logger')
 
-class Database {
-  constructor(firebase) {
-    this.firebase = firebase
-    this.ticketsDB = this.firebase.database().ref("Tickets")
-  }
+const Database = (database) => {
+  const ticketsDB = database.ref("Tickets")
 
-  add(tickets){
+  const add = (tickets) => {
     for (let ticket of tickets.data) {
-      this.firebase.database().ref('Tickets/' + ticket.id).set({
+      database.ref('Tickets/' + ticket.id).set({
         ticket: ticket,
         checkedIn: false
       })
     }
   }
 
-  destroy(){
-    this.ticketsDB.once('value')
+  const destroy = () => {
+    ticketsDB.once('value')
       .then((snapshot) => {
         snapshot.forEach((childSnapshot) => {
           const key = childSnapshot.key
-          this.firebase.database().ref('/Tickets/' + key).remove()
+          database.ref('/Tickets/' + key).remove()
       })
+    })
+  }
+
+  return { add, destroy }
+}
+
+module.exports = Database
+
+/* With Jack
+
+const logger = require('../utility/logger')
+
+const adder = (state) => (tickets) => {
+  for (let ticket of tickets.data) {
+    state.firebase.database().ref('Tickets/' + ticket.id).set({
+      ticket: ticket,
+      checkedIn: false
     })
   }
 }
 
-module.exports = Database
+const destroyer = (state) => () =>  {
+  state.ticketsDB.once('value')
+    .then((snapshot) => {
+      snapshot.forEach((childSnapshot) => {
+        const key = childSnapshot.key
+        state.firebase.database().ref('/Tickets/' + key).remove()
+    })
+  })
+}
+
+const Database = (firebase) => {
+  const ticketsDB = firebase.database().ref("Tickets")
+  const add = adder({ firebase })
+  const destroy = destroyer({ firebase })
+
+  return { add, destroy }
+}
+
+*/
+
+
+
+
+
+
+
+
+
 
 //
 // function () {
