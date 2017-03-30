@@ -4,7 +4,7 @@ version: '3'
 services:
   tito-slack:
     container_name: That-Registration-Server
-    image: thatconference/That-Registration-Server:dev
+    image: thatconference/that-registration-server:dev
     build:
       context: .
       dockerfile: Dockerfile
