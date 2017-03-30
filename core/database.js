@@ -5,18 +5,42 @@ class Database {
     this.firebase = firebase
     this.ticketsDB = this.firebase.database().ref("Tickets")
 
+    /*
+      This  event runs everytime the process is started
+    */
     this.ticketsDB.on('child_added', (postSnapshot) => {
-      const postReference = postSnapshot.ref;
-      const uid = postSnapshot.val().uid;
-      const postId = postSnapshot.key;
+      const postReference = postSnapshot.ref
+      const uid = postSnapshot.val().uid
+      const postId = postSnapshot.key
       Winston.info(`added: ${postId}`)
+
+      // Add a value listener to this event
+      postReference.child("checkedIn").on('value', (isCheckedIn) => {
+        Winston.info(`checkedIn value has changed for ${postId} now ${isCheckedIn.val()}`)
+        if(isCheckedIn.val()){
+
+          /*
+            TODO
+
+            ? this could prolly just happen on the changed event
+            ** Needs to be wrapped in a transaction.
+
+            1. Call tito and check in user.
+            2. Call that conference and add user record to it.
+            3. Move record from here to another DB of checked in users with additional data?
+          */
+
+          Winston.info(`call tito and check in user`)
+        }
+      })
     })
 
     this.ticketsDB.on('child_changed', (postSnapshot) => {
       const postReference = postSnapshot.ref;
-      const uid = postSnapshot.val().uid;
-      const postId = postSnapshot.key;
-      Winston.info(`changed: ${postId}`)
+      const rowKey = postSnapshot.key;
+      Winston.info(`row key: ${rowKey} changed`)
+      Winston.info(`name on ticket: ${postSnapshot.val().ticket.attributes.name}`)
+
     })
 
     this.ticketsDB.on('child_removed', (postSnapshot) => {
@@ -49,15 +73,6 @@ class Database {
 
 module.exports = Database
 
-// exports.destroy = () => {
-//   ticketsDB.once('value')
-//     .then(function(snapshot) {
-//       snapshot.forEach((childSnapshot) => {
-//         const key = childSnapshot.key
-//         Firebase.database().ref('/Tickets/' + key).remove()
-//     })
-//   })
-// }
 
 //
 // function () {
@@ -74,33 +89,6 @@ module.exports = Database
 //   })
 // });
 //
-// Firebase.database().ref('Tickets').on('child_added', function(postSnapshot) {
-//   var postReference = postSnapshot.ref;
-//   var uid = postSnapshot.val().uid;
-//   var postId = postSnapshot.key;
-//   console.log('added', postId)
-// })
-//
-// Firebase.database().ref('Tickets').on('child_changed', function(postSnapshot) {
-//   var postReference = postSnapshot.ref;
-//   var uid = postSnapshot.val().uid;
-//   var postId = postSnapshot.key;
-//   console.log('updated', postId)
-// })
-//
-// Firebase.database().ref('Tickets').on('child_removed', function(postSnapshot) {
-//   var postReference = postSnapshot.ref;
-//   var uid = postSnapshot.val().uid;
-//   var postId = postSnapshot.key;
-//   console.log('deleted', postId)
-// })
-//
-// for(i = 0; i < 10; i++) {
-//   Firebase.database().ref('Tickets/' + i).set({
-//     username: 'jimmy' + i,
-//     data: 'jimmy' + i,
-//   });
-// }
 //
 // var ticketRef = Firebase.database().ref('Tickets');
 // for(i = 0; i < 10; i++) {
@@ -114,16 +102,3 @@ module.exports = Database
 //   // });
 // }
 //
-//
-// // setTimeout(function (){
-// //   var qq = Firebase.database().ref("Tickets").orderByKey();
-// //   qq.once("value")
-// //     .then(function(snapshot) {
-// //       snapshot.forEach(function(childSnapshot) {
-// //         var key = childSnapshot.key
-// //         Firebase.database().ref('/Tickets/' + key).remove()
-// //     })
-// //   });
-// // }, 5000)
-//
-// }
