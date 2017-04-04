@@ -1,5 +1,5 @@
 const Request = require('request')
-const logger  = require('../utility/logger')
+const logger = require('../utility/logger')
 
 let options = {
   url: '',
@@ -15,13 +15,20 @@ let options = {
 
 exports.getTickets = (database, callback) => {
   options.url = `https://${process.env.TITO_API_HOST}${process.env.TITO_API_PATH}`
+  logger.debug(`Tito HTTP Request Options: \r\n ${options}`)
 
-  Request(options, (error, response, body) => {
-    logger.debug(`Tito Returned: \r\n ${body}`)
+  Request(options, (error, response, payload) => {
+    logger.debug(`Tito Returned: \r\n ${payload}`)
 
-    const tickets = JSON.parse(body)
-    database.add(tickets)
+    const ticketsReturned = JSON.parse(payload)
+    database.add(ticketsReturned)
 
-    callback(body)
+    callback(ticketsReturned)
   })
+}
+
+exports.checkInUser = (user, callback) => {
+  //TODO implement call to tito checking in users.
+  logger.info(`TODO - call tito checking in a user.`)
+  callback('call tito checking in a user.')
 }

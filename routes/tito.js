@@ -1,4 +1,4 @@
-const Tito   = require('../core/tito')
+const Tito = require('../core/tito')
 const logger = require('../utility/logger')
 
 exports.seed = (database) => {

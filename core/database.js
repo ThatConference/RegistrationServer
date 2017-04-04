@@ -1,14 +1,25 @@
 const logger = require('../utility/logger')
 
 const Database = (database) => {
-  const ticketsDB = database.ref("Tickets")
+  const ticketsDB = database.ref('Tickets')
 
   const add = (tickets) => {
     for (let ticket of tickets.data) {
-      database.ref('Tickets/' + ticket.id).set({
+      database.ref(`Tickets/${ticket.id}`).set({
         ticket: ticket,
-        checkedIn: false
+        checkedInState: {
+          mobile: false,
+          tito: false,
+          thatConference: false,
+          isCheckedIn: false
+        },
+        staffMember: 'Clark@ThatConference.com',
+        nfcTag: {
+          id: '1234567',
+          somethingElse: 'something else'
+        }
       })
+      logger.info(`Added ticket - ${ticket.id}`)
     }
   }
 
@@ -17,9 +28,10 @@ const Database = (database) => {
       .then((snapshot) => {
         snapshot.forEach((childSnapshot) => {
           const key = childSnapshot.key
-          database.ref('/Tickets/' + key).remove()
+          database.ref(`/Tickets/${key}`).remove()
+          logger.info(`Removed ticket - ${key}`)
+        })
       })
-    })
   }
 
   return { add, destroy }
@@ -59,15 +71,6 @@ const Database = (firebase) => {
 }
 
 */
-
-
-
-
-
-
-
-
-
 
 //
 // function () {

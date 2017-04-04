@@ -1,4 +1,4 @@
-const Winston  = require('winston')
+const Winston = require('winston')
 
 let logger = new (Winston.Logger)({
   levels: {
