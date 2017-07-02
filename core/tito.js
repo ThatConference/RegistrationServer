@@ -29,12 +29,12 @@ exports.getTickets = (database, reply) => {
 
 exports.checkInUser = (user, callback) => {
   //TODO implement call to tito checking in users.
-  logger.info(`TODO - call tito checking in a user.`)
-  callback('call tito checking in a user.')
-    const tickets = JSON.parse(body)
-    database.add(tickets)
-    console.log(`number of tickets: ${tickets.length}`)
-  })
+  // logger.info(`TODO - call tito checking in a user.`)
+  // callback('call tito checking in a user.')
+  //   const tickets = JSON.parse(body)
+  //   database.add(tickets)
+  //   console.log(`number of tickets: ${tickets.length}`)
+  // })
 }
 
 exports.seedTestTickets = (database, reply) => {
