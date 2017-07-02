@@ -1,11 +1,12 @@
 const logger = require('../utility/logger')
 
 const Database = (database) => {
-  const ticketsDB = database.ref('Tickets')
+
+  const ticketsDB = database.ref("Orders")
 
   const add = (tickets) => {
     for (let ticket of tickets.data) {
-      database.ref(`Tickets/${ticket.id}`).set({
+      database.ref('Orders/' + ticket.id).set({
         ticket: ticket,
         checkedInState: {
           mobile: false,
@@ -23,18 +24,25 @@ const Database = (database) => {
     }
   }
 
+  const addTestData = (orders) => {
+    for (let order of orders) {
+      database.ref('Orders/' + order.orderNumber).set(order)
+    }
+  }
+
   const destroy = () => {
     ticketsDB.once('value')
       .then((snapshot) => {
         snapshot.forEach((childSnapshot) => {
           const key = childSnapshot.key
-          database.ref(`/Tickets/${key}`).remove()
+
+          database.ref(`/Orders/${key}`).remove()
           logger.info(`Removed ticket - ${key}`)
         })
       })
   }
 
-  return { add, destroy }
+  return { add, addTestData, destroy }
 }
 
 module.exports = Database

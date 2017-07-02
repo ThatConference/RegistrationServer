@@ -4,7 +4,8 @@ const logger = require('../utility/logger')
 exports.seed = (database) => {
   return function (request, reply) {
     logger.info('Tito Seed Called')
-    Tito.getTickets(database, reply)
+    //Tito.getTickets(database, reply)
+    Tito.seedTestTickets(database, reply)
   }
 }
 
