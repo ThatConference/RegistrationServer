@@ -13,28 +13,115 @@ let options = {
   }
 }
 
-exports.getTickets = (database, reply) => {
-  options.url = `https://${process.env.TITO_API_HOST}${process.env.TITO_API_PATH}`
-  logger.debug(`Tito HTTP Request Options: \r\n ${options}`)
+exports.seed = (database, reply) => {
+  let checkInList, regList
 
-  Request(options, (error, response, payload) => {
-    logger.debug(`Tito Returned: \r\n ${payload}`)
+  let p1 = new Promise( (resolve, reject) => {
+    options.url = `https://${process.env.TITO_API_V1_HOST}/${process.env.TITO_CHECKIN_LIST}`
 
-    const ticketsReturned = JSON.parse(payload)
-    database.add(ticketsReturned)
+    logger.info('Calling tito to get checkin list')
 
-    callback(ticketsReturned)
+    Request(options, (error, response, payload) => {
+      checkInList = JSON.parse(payload)
+      resolve()
+    })
+  })
+
+  let p2 = new Promise((resolve, reject) => {
+    options.url = `https://${process.env.TITO_API_HOST}/${process.env.TITO_API_PATH}/registrations`
+
+    logger.info('Calling tito to get registrations')
+
+    Request(options, (error, response, payload) => {
+      regList = JSON.parse(payload)
+      resolve()
+    })
+  })
+
+  // now do the mapping..
+  Promise.all([p1, p2]).then(() => {
+
+    logger.debug(`Tito returned ${checkInList.tickets.length} tickets`)
+    logger.debug(`Tito returned ${regList.data.length} registrations`)
+
+    // Map the orders
+    let orders = remapIntoOrders(checkInList.tickets)
+    let mappedOrders = createOrderMap(orders)
+
+    let finalOrders = updateOrderMap(mappedOrders, regList.data)
+
+    //map the orders in...
+    addToDB(finalOrders, database)
   })
 }
 
-exports.checkInUser = (user, callback) => {
-  //TODO implement call to tito checking in users.
-  // logger.info(`TODO - call tito checking in a user.`)
-  // callback('call tito checking in a user.')
-  //   const tickets = JSON.parse(body)
-  //   database.add(tickets)
-  //   console.log(`number of tickets: ${tickets.length}`)
-  // })
+const remapIntoOrders = (tickets) => {
+  logger.debug(`Remapping Tickets into Orders....`)
+  return tickets.map( (t) => {
+
+    let newOrder = {
+      orderNumber: t.registration_reference,
+      address: {
+        street: '123'
+      },
+      tickets: []
+    }
+
+    let ticket = {
+      id: t.reference,
+      firstNmae: t.first_name,
+      lastName: t.last_name,
+      nfcTag: 0
+    }
+
+    newOrder.tickets.push(ticket)
+
+    return [t.registration_reference, newOrder]
+  })
+}
+
+const createOrderMap = (orders) => {
+  logger.debug(`Creating Order Map.`)
+  logger.debug(`Total Before Orders: ${orders.length}`)
+
+  let orderMap = new Map()
+  for (let order of orders) {
+
+    let key = order[0]
+    let value = order[1]
+
+    if (orderMap.has(key))
+      orderMap.get(key).tickets.push(value.tickets[0])
+    else
+      orderMap.set(key, value)
+  }
+
+  logger.debug(`Total Unique Orders: ${orderMap.size}`)
+
+  return orderMap
+}
+
+const updateOrderMap = (orderMap, registrations) => {
+
+  for (let reg of registrations) {
+    const key = reg.attributes.reference
+    if (orderMap.has(key)){
+      let order = orderMap.get(key)
+
+      order.name = reg.attributes.name
+      order.email = reg.attributes.email
+      order.phoneNumber = reg.attributes["phone-number"]
+      order.company = reg.attributes["billing-address"]["company-name"]
+
+      orderMap.set(key, order)
+    }
+  }
+
+  return orderMap
+}
+
+const addToDB = (orderMap, database) => {
+  database.add(orderMap)
 }
 
 exports.seedTestTickets = (database, reply) => {

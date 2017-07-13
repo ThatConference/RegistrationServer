@@ -4,23 +4,10 @@ const Database = (database) => {
 
   const ticketsDB = database.ref("Orders")
 
-  const add = (tickets) => {
-    for (let ticket of tickets.data) {
-      database.ref('Orders/' + ticket.id).set({
-        ticket: ticket,
-        checkedInState: {
-          mobile: false,
-          tito: false,
-          thatConference: false,
-          isCheckedIn: false
-        },
-        staffMember: 'Clark@ThatConference.com',
-        nfcTag: {
-          id: '1234567',
-          somethingElse: 'something else'
-        }
-      })
-      logger.info(`Added ticket - ${ticket.id}`)
+  const add = (orderMap) => {
+    for (let [key, value] of orderMap) {
+      database.ref('CLARK/' + key).set(value)
+      logger.info(`Added ticket - ${key}`)
     }
   }
 

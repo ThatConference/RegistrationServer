@@ -5,7 +5,7 @@ exports.seed = (database) => {
   return function (request, reply) {
     logger.info('Tito Seed Called')
     //Tito.getTickets(database, reply)
-    Tito.seedTestTickets(database, reply)
+    Tito.seed(database, reply)
   }
 }
 
