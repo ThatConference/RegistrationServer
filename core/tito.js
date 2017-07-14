@@ -14,7 +14,7 @@ let options = {
 }
 
 exports.seed = (database, reply) => {
-  let checkInList, regList
+  let checkInList, regList, replyResult = {}
 
   let p1 = new Promise( (resolve, reject) => {
     options.url = `https://${process.env.TITO_API_V1_HOST}/${process.env.TITO_CHECKIN_LIST}`
@@ -40,18 +40,32 @@ exports.seed = (database, reply) => {
 
   // now do the mapping..
   Promise.all([p1, p2]).then(() => {
+    replyResult.checkInList = checkInList.tickets.length
+    replyResult.regList = regList.data.length
 
     logger.debug(`Tito returned ${checkInList.tickets.length} tickets`)
     logger.debug(`Tito returned ${regList.data.length} registrations`)
 
     // Map the orders
     let orders = remapIntoOrders(checkInList.tickets)
+    replyResult.orders = orders.length
+
     let mappedOrders = createOrderMap(orders)
+    replyResult.mappedOrders = mappedOrders.size
 
     let finalOrders = updateOrderMap(mappedOrders, regList.data)
+    replyResult.finalOrders = finalOrders.size
 
     //map the orders in...
     addToDB(finalOrders, database)
+
+  }).then( result => {
+    replyResult.status = 'success'
+    reply(replyResult)
+
+  }).catch( e => {
+    logger.error(`Error! ${e.message}`) //todo.. why isn't this logging
+    reply(`failed: ${e.message}`)
   })
 }
 
@@ -71,6 +85,19 @@ const remapIntoOrders = (tickets) => {
       id: t.reference,
       firstNmae: t.first_name,
       lastName: t.last_name,
+      type: t.release_title,
+      companyName: t.answers.reduce( (acc, current) => {
+        if (current.question.toUpperCase().includes('Company Name'.toUpperCase()))
+          return acc + current.response
+        return acc
+      }, ''),
+
+      shirtSize: t.answers.reduce( (acc, current) => {
+        if (current.question.toUpperCase().includes('t-shirt'.toUpperCase()))
+          return acc + current.response
+        return acc
+      }, ''),
+
       nfcTag: 0
     }
 
