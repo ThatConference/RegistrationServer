@@ -21,10 +21,14 @@ exports.seed = (database, reply) => {
 
     logger.info('Calling tito to get checkin list')
 
+    // todo.. Get the number of pages and then call for each page building up an entire list
+    // right now it's limited at 1000
+
     Request(options, (error, response, payload) => {
       checkInList = JSON.parse(payload)
       resolve()
     })
+
   })
 
   let p2 = new Promise((resolve, reject) => {
@@ -75,17 +79,22 @@ const remapIntoOrders = (tickets) => {
 
     let newOrder = {
       orderNumber: t.registration_reference,
-      address: {
-        street: '123'
-      },
+      address: 'N/A from API',
+      isSponsor: false,
+      isSpeaker: false,
+      isSponsoredSpeaker: false,
       tickets: []
     }
 
     let ticket = {
-      id: t.reference,
-      firstNmae: t.first_name,
+      orderId: t.registration_reference,
+      ticketId: t.reference,
+      fullName: t.name,
+      firstName: t.first_name,
       lastName: t.last_name,
       type: t.release_title,
+      email: t.email,
+
       companyName: t.answers.reduce( (acc, current) => {
         if (current.question.toUpperCase().includes('Company Name'.toUpperCase()))
           return acc + current.response
@@ -98,8 +107,35 @@ const remapIntoOrders = (tickets) => {
         return acc
       }, ''),
 
-      nfcTag: 0
+      dietaryRestrictions: t.answers.reduce( (acc, current) => {
+        if (current.question.toUpperCase().includes('dietary'.toUpperCase()))
+          return acc + current.response
+        return acc
+      }, ''),
+
+      isFirstTimeCamper: Boolean(t.answers.reduce( (acc, current) => {
+        if (current.response.toUpperCase().includes('first time camper'.toUpperCase()))
+          return acc + 1
+        return acc
+      }, 0)),
+
+      nfcTag: '',
+
+      registrationStatus: {
+        checkedIn: false,
+        titoCheckedIn: false,
+        tcCheckedIn: false
+      }
     }
+
+    if(ticket.type.toUpperCase().includes('Expo'.toUpperCase()))
+      newOrder.isSponsor = true;
+
+    if(ticket.type.toUpperCase().includes('Counselor'.toUpperCase())) // This would include sponsored speakers. Not sure if that is ok?
+      newOrder.isSpeaker = true;
+
+    if(ticket.type.toUpperCase().includes('Sponsored Counselor'.toUpperCase()))
+      newOrder.isSponsoredSpeaker = true;
 
     newOrder.tickets.push(ticket)
 
@@ -149,58 +185,4 @@ const updateOrderMap = (orderMap, registrations) => {
 
 const addToDB = (orderMap, database) => {
   database.add(orderMap)
-}
-
-exports.seedTestTickets = (database, reply) => {
-  database.addTestData([order])
-  reply('seeded')
-}
-
-var order = {
-
-  orderNumber: '44444',
-  isSpeaker: false,
-  isSponsor: false,
-  discountCode: 'asdf',
-
-  firstName: 'Johnny',
-  lastName: 'Appleseed',
-  email: 'clark@unspecified.io',
-  company: 'unspecified llc',
-
-  address: {
-    street: '9109 carol lane',
-    city: 'spring grove',
-    state: 'il'
-  },
-
-  registrationState: {
-    registered: false,
-    thatConference: false,
-    tito: false
-  },
-
-  tickets: [
-    {
-      id: '5JRY-1',
-      type: 'Attendee',
-      name: 'Keith Burnell',
-      shirtSize: 'adult medium',
-      nfcTag: {
-        id: 1234,
-        displayName: 'Keith'
-      }
-    },
-
-    {
-      id: '5JRY-2',
-      type: 'Attendee',
-      name: 'Sally Burnell',
-      shirtSize: 'adult skinny',
-      nfcTag: {
-        id: 1234,
-        displayName: 'Keith'
-      }
-    }
-  ]
 }

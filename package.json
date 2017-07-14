@@ -6,19 +6,19 @@
   "author": "Clark Sell",
   "license": "Apache V2",
   "engines": {
-    "node": ">=6.5"
+    "node": ">=8"
   },
   "dependencies": {
     "dotenv": "^4.0.0",
-    "firebase": "^3.7.4",
-    "hapi": "^16.1.0",
+    "firebase": "^3.9.0",
+    "hapi": "^16.4.3",
     "request": "^2.81.0",
-    "request-promise-native": "^1.0.3",
+    "request-promise-native": "^1.0.4",
     "winston": "^2.3.1"
   },
   "devDependencies": {
     "standard": "^9.0.1",
-    "tap": "^10.3.0"
+    "tap": "^10.7.0"
   },
   "scripts": {
     "start": "node ./server.js",

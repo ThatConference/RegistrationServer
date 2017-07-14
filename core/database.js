@@ -6,14 +6,8 @@ const Database = (database) => {
 
   const add = (orderMap) => {
     for (let [key, value] of orderMap) {
-      database.ref('CLARK/' + key).set(value)
-      logger.info(`Added ticket - ${key}`)
-    }
-  }
-
-  const addTestData = (orders) => {
-    for (let order of orders) {
-      database.ref('Orders/' + order.orderNumber).set(order)
+      database.ref('Orders/' + key).set(value)
+      //logger.info(`Added ticket - ${key}`)
     }
   }
 
@@ -29,7 +23,7 @@ const Database = (database) => {
       })
   }
 
-  return { add, addTestData, destroy }
+  return { add, destroy }
 }
 
 module.exports = Database
