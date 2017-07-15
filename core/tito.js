@@ -1,4 +1,5 @@
-const Request = require('request')
+const Request = require('request-promise-native')
+const Moment = require('moment')
 const logger = require('../utility/logger')
 
 let options = {
@@ -13,64 +14,56 @@ let options = {
   }
 }
 
-exports.seed = (database, reply) => {
-  let checkInList, regList, replyResult = {}
+const registrationDateCutoff = Moment(process.env.lateRegistrationDate, 'YYYY-MM-DD')
 
-  let p1 = new Promise( (resolve, reject) => {
-    options.url = `https://${process.env.TITO_API_V1_HOST}/${process.env.TITO_CHECKIN_LIST}`
+async function getCheckInTickets(){
+  options.url = `https://${process.env.TITO_API_V1_HOST}/${process.env.TITO_CHECKIN_LIST}`
+  logger.info(`Calling tito to get check in list, ${options.url}`)
+  let checkinListMeta = JSON.parse(await Request.get(options))
 
-    logger.info('Calling tito to get checkin list')
+  let tickets = []
 
-    // todo.. Get the number of pages and then call for each page building up an entire list
-    // right now it's limited at 1000
+  for (i = 1; i <= checkinListMeta.total_pages; i++) {
+    let uri = `${checkinListMeta.tickets_url}\?page=${i}`
+    options.url = uri
 
-    Request(options, (error, response, payload) => {
-      checkInList = JSON.parse(payload)
-      resolve()
-    })
+    let currentTickets = JSON.parse(await Request.get(options))
+    tickets = tickets.concat(currentTickets.tickets)
+  }
+  return tickets
+}
 
-  })
+async function getTitoRegistrations() {
+  options.url = `https://${process.env.TITO_API_HOST}/${process.env.TITO_API_PATH}/registrations`
+  logger.info(`Calling tito to get registrations, ${options.url}`)
 
-  let p2 = new Promise((resolve, reject) => {
-    options.url = `https://${process.env.TITO_API_HOST}/${process.env.TITO_API_PATH}/registrations`
+  return JSON.parse(await Request.get(options)).data
+}
 
-    logger.info('Calling tito to get registrations')
+async function populateDB ( database, reply ) {
+  let replyResult = {}
+  let [checkInList, regList] = await Promise.all([getCheckInTickets(), getTitoRegistrations()])
+  console.log(`check in list length: ${checkInList.length}`)
+  console.log(`regList in list length: ${regList.length}`)
 
-    Request(options, (error, response, payload) => {
-      regList = JSON.parse(payload)
-      resolve()
-    })
-  })
+  logger.debug(`Tito returned ${checkInList.length} tickets`)
+  logger.debug(`Tito returned ${regList.length} registrations`)
 
-  // now do the mapping..
-  Promise.all([p1, p2]).then(() => {
-    replyResult.checkInList = checkInList.tickets.length
-    replyResult.regList = regList.data.length
+  // Map the orders
+  let orders = remapIntoOrders(checkInList)
+  replyResult.orders = orders.length
 
-    logger.debug(`Tito returned ${checkInList.tickets.length} tickets`)
-    logger.debug(`Tito returned ${regList.data.length} registrations`)
+  let mappedOrders = createOrderMap(orders)
+  replyResult.mappedOrders = mappedOrders.size
 
-    // Map the orders
-    let orders = remapIntoOrders(checkInList.tickets)
-    replyResult.orders = orders.length
+  let finalOrders = updateOrderMap(mappedOrders, regList)
+  replyResult.finalOrders = finalOrders.size
 
-    let mappedOrders = createOrderMap(orders)
-    replyResult.mappedOrders = mappedOrders.size
+  //map the orders in...
+  addToDB(finalOrders, database)
 
-    let finalOrders = updateOrderMap(mappedOrders, regList.data)
-    replyResult.finalOrders = finalOrders.size
-
-    //map the orders in...
-    addToDB(finalOrders, database)
-
-  }).then( result => {
-    replyResult.status = 'success'
-    reply(replyResult)
-
-  }).catch( e => {
-    logger.error(`Error! ${e.message}`) //todo.. why isn't this logging
-    reply(`failed: ${e.message}`)
-  })
+  replyResult.status = 'success'
+  reply(replyResult)
 }
 
 const remapIntoOrders = (tickets) => {
@@ -79,7 +72,6 @@ const remapIntoOrders = (tickets) => {
 
     let newOrder = {
       orderNumber: t.registration_reference,
-      address: 'N/A from API',
       isSponsor: false,
       isSpeaker: false,
       isSponsoredSpeaker: false,
@@ -93,7 +85,7 @@ const remapIntoOrders = (tickets) => {
       firstName: t.first_name,
       lastName: t.last_name,
       type: t.release_title,
-      email: t.email,
+      email: 'foo@foo.com', //t.email,
 
       companyName: t.answers.reduce( (acc, current) => {
         if (current.question.toUpperCase().includes('Company Name'.toUpperCase()))
@@ -175,6 +167,8 @@ const updateOrderMap = (orderMap, registrations) => {
       order.email = reg.attributes.email
       order.phoneNumber = reg.attributes["phone-number"]
       order.company = reg.attributes["billing-address"]["company-name"]
+      order.completedAt = reg.attributes["completed-at"]
+      order.isLateRegistration = Moment(reg.attributes['completed-at']).isAfter(registrationDateCutoff),
 
       orderMap.set(key, order)
     }
@@ -185,4 +179,8 @@ const updateOrderMap = (orderMap, registrations) => {
 
 const addToDB = (orderMap, database) => {
   database.add(orderMap)
+}
+
+exports.seed = (database, reply) => {
+  populateDB(database, reply)
 }

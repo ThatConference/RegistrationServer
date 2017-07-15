@@ -12,7 +12,9 @@
     "dotenv": "^4.0.0",
     "firebase": "^3.9.0",
     "hapi": "^16.4.3",
+    "moment": "^2.18.1",
     "request": "^2.81.0",
+    "request-promise": "^4.2.1",
     "request-promise-native": "^1.0.4",
     "winston": "^2.3.1"
   },
