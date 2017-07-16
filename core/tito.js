@@ -14,7 +14,7 @@ let options = {
   }
 }
 
-const registrationDateCutoff = Moment(process.env.lateRegistrationDate, 'YYYY-MM-DD')
+const registrationDateCutoff = Moment(process.env.LATE_REGISTRATION_DATE, 'YYYY-MM-DD')
 
 async function getCheckInTickets(){
   options.url = `https://${process.env.TITO_API_V1_HOST}/${process.env.TITO_CHECKIN_LIST}`
@@ -85,7 +85,7 @@ const remapIntoOrders = (tickets) => {
       firstName: t.first_name,
       lastName: t.last_name,
       type: t.release_title,
-      email: 'foo@foo.com', //t.email,
+      email: t.email,
 
       companyName: t.answers.reduce( (acc, current) => {
         if (current.question.toUpperCase().includes('Company Name'.toUpperCase()))
