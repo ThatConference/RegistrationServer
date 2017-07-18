@@ -6,8 +6,15 @@ const Database = (database) => {
 
   const add = (orderMap) => {
     for (let [key, value] of orderMap) {
-      database.ref('Orders/' + key).set(value)
-      //logger.info(`Added ticket - ${key}`)
+
+      const tickets = Object.assign([], value.tickets) //copy the tickets out to be saved later
+      delete(value.tickets) //remove tickets so firebase doesn't just add an array of non-indexed tickets.
+
+      database.ref(`Orders/${key}`).set(value)
+
+      for (const ticket of tickets) {
+        database.ref(`Orders/${key}/tickets/${ticket.ticketId}`).set(ticket)
+      }
     }
   }
 
