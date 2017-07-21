@@ -86,6 +86,7 @@ const remapIntoOrders = (tickets) => {
       lastName: t.last_name,
       type: t.release_title,
       email: t.email,
+      staffMember: '',
 
       companyName: t.answers.reduce( (acc, current) => {
         if (current.question.toUpperCase().includes('Company Name'.toUpperCase()))
