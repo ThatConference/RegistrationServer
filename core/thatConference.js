@@ -1,23 +1,63 @@
 const Request = require('request')
-const logger = require('../utility/logger')
+const Logger = require('../utility/logger')
+const Moment = require('moment')
 
 let options = {
-  url: '',
-  host: 'localhost',
-  path: '/',
-  port: 443,
-  method: 'POST',
+  url: `${process.env.THAT_CONFERENCE_URI}`,
   headers: {
-    Accept: 'application/json',
-    Authorization: `Token token=${process.env.THATCONFERENCE_API_TOKEN}`
-  }
+    ThatToken: `${process.env.THAT_CONFERENCE_TOKEN}`
+  },
+  json: true
 }
 
-exports.setNFCTag = (nfcTag, callback) => {
-  /*
-  TODO
-    Call That Conference and setting the NFC tag for a badge
-  */
-  logger.info(`TODO: call That Conference setting nfc tag data`)
-  callback("success call That Conference setting nfc tag data")  
+/* Example Ticket From Tito
+  {
+    "companyName": "That Conference, NFP",
+    "dietaryRestrictions": "",
+    "email": "someone@gmail.com",
+    "firstName": "papa",
+    "fullName": "papa camper",
+    "isFirstTimeCamper": false,
+    "lastName": "camper",
+    "nfcTag": "111",
+    "orderId": "5JRY",
+    "registrationStatus": {
+      "checkedIn": true,
+      "tcCheckedIn": false,
+      "titoCheckedIn": true
+    },
+    "shirtSize": "Men Small",
+    "ticketId": "5JRY-6",
+    "type": "Family Access - Child"
+  }
+*/
+
+exports.checkIn = (ticket) => {
+
+  let i = new Date().getTime();
+  i = i & 0xffffffff;
+
+  let payload = {
+    AttendeeID: i,
+    NFCId: ticket.nfcTag,
+    FirstName: ticket.firstName,
+    LastName: ticket.lastName,
+    Email: ticket.email,
+    CompanyName: ticket.companyName,
+    Title: "ticket.title", //don't have, would need to get off order
+    City: "ticket.city",  // don't have, would need to get off order
+    State: "ticket.state", // don't have, would need to get off order
+    Country: "ticket.country", // don't have, would need to get off order
+    Year: 2017
+  }
+  options.body = payload
+
+  // var x = await Request.post(options)
+  // console.log('asf', x.statusCode)
+
+  Request.post(options, (error, response, body) => {
+    Logger.info(`TC Result - ${response.statusCode}, for ${payload.AttendeeID} \r\n ${JSON.stringify(payload)}`)
+  })
+
+
 }
