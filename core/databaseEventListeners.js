@@ -6,9 +6,9 @@ module.exports = (database) => {
   Logger.info(`starting db listeners`)
   let ticketsDB = database.ref('Orders')
 
-  ticketsDB.on('child_changed', (order) => {
+  ticketsDB.on('child_added', (order) => {
     order.ref.child('tickets').on('child_changed', function(ticket) {
-      ticket.ref.child('registrationStatus/checkedIn').on('value', (t) => {
+      ticket.ref.child('registrationStatus/checkedIn').once('value', (t) => {
         if(t.val() === true) {
           Logger.info(`Calling TC to Check In - ${ticket.val().ticketId}`)
           ThatConference.checkIn(ticket.val())
