@@ -1,6 +1,7 @@
 const Request = require('request-promise-native')
 const Moment = require('moment')
 const logger = require('../utility/logger')
+const Helpers = require('../utility/helpers')
 
 let options = {
   url: '',
@@ -79,6 +80,7 @@ const remapIntoOrders = (tickets) => {
     }
 
     let ticket = {
+      attendeeId: Helpers.createUniqueId(),
       orderId: t.registration_reference,
       ticketId: t.reference,
       fullName: t.name,

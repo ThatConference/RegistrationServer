@@ -34,11 +34,8 @@ let options = {
 
 exports.checkIn = (ticket) => {
 
-  let i = new Date().getTime();
-  i = i & 0xffffffff;
-
   let payload = {
-    AttendeeID: i,
+    AttendeeID: ticket.attendeeId,
     NFCId: ticket.nfcTag,
     FirstName: ticket.firstName,
     LastName: ticket.lastName,
@@ -50,6 +47,7 @@ exports.checkIn = (ticket) => {
     Country: "ticket.country", // don't have, would need to get off order
     Year: 2017
   }
+
   options.body = payload
 
   // var x = await Request.post(options)
@@ -58,6 +56,5 @@ exports.checkIn = (ticket) => {
   Request.post(options, (error, response, body) => {
     Logger.info(`TC Result - ${response.statusCode}, for ${payload.AttendeeID} \r\n ${JSON.stringify(payload)}`)
   })
-
 
 }
