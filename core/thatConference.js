@@ -34,27 +34,43 @@ let options = {
 
 exports.checkIn = (ticket) => {
 
-  let payload = {
-    AttendeeID: ticket.attendeeId,
-    NFCId: ticket.nfcTag,
-    FirstName: ticket.firstName,
-    LastName: ticket.lastName,
-    Email: ticket.email,
-    CompanyName: ticket.companyName,
-    Title: "ticket.title", //don't have, would need to get off order
-    City: "ticket.city",  // don't have, would need to get off order
-    State: "ticket.state", // don't have, would need to get off order
-    Country: "ticket.country", // don't have, would need to get off order
-    Year: 2017
-  }
+  return new Promise((resolve, reject) => {
+    if (ticket.nfcTag) {
 
-  options.body = payload
+      let payload = {
+        AttendeeID: ticket.attendeeId,
+        NFCId: ticket.nfcTag,
+        FirstName: ticket.firstName,
+        LastName: ticket.lastName,
+        Email: ticket.email,
+        CompanyName: ticket.companyName,
+        Title: "ticket.title", //don't have, would need to get off order
+        City: "ticket.city",  // don't have, would need to get off order
+        State: "ticket.state", // don't have, would need to get off order
+        Country: "ticket.country", // don't have, would need to get off order
+        Year: 2017
+      }
 
-  // var x = await Request.post(options)
-  // console.log('asf', x.statusCode)
+      options.body = payload
 
-  Request.post(options, (error, response, body) => {
-    Logger.info(`TC Result - ${response.statusCode}, for ${payload.AttendeeID} \r\n ${JSON.stringify(payload)}`)
+      Request.post(options, (error, response, body) => {
+        if(error){
+          console.log(error)
+          // ?? Logger.error(`The Checkin Call To That Conference Errored -> \r\n status code: ${response.statusCode} \r\n error: ${JSON.stringify(error)} \r\n ticket: ${JSON.stringify(payload)}`)
+          reject()
+        }
+        if(response.statusCode != 200 ){
+          Logger.error(`The Checkin Call To That Conference Errored -> \r\n status code: ${response.statusCode} \r\n ticket: ${JSON.stringify(payload)}`)
+          reject()
+        }
+
+        Logger.info(`TC Result - ${response.statusCode}, for ${payload.AttendeeID} \r\n ${JSON.stringify(payload)}`)
+        resolve()
+      })
+    } else{
+      //dnn't check into that conference
+      resolve()
+    }
+
   })
-
 }

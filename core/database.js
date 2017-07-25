@@ -30,7 +30,12 @@ const Database = (database) => {
       })
   }
 
-  return { add, destroy }
+  const addToQueue = async (task) => {
+    const tasks = database.ref("queue/tasks")
+    await tasks.push(task);
+  }
+
+  return { add, addToQueue, destroy }
 }
 
 module.exports = Database

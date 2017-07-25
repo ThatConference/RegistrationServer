@@ -5,10 +5,10 @@ const Hapi = require('hapi')
 const logger = require('./utility/logger')
 const firebase = require('./utility/firebase')
 const database = require('./core/database')
-const databaseListeners = require('./core/databaseEventListeners')
+const queueListener = require('./core/queueListener')
 
-// start the event listeners
-databaseListeners(firebase)
+// start the queue listeners
+queueListener(firebase)
 
 const server = new Hapi.Server()
 const port = Number(process.env.PORT || 8000)
