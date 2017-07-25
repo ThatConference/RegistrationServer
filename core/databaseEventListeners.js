@@ -7,7 +7,12 @@ module.exports = (database) => {
   let ticketsDB = database.ref('Orders')
 
   ticketsDB.on('child_added', (order) => {
-    order.ref.child('/tickets').on('child_changed', (ticket) => {
+    order.ref.child('/tickets').on('child_changed', (ticket, oldTicket) => {
+
+      console.log(oldTicket)
+      //console.log(` \r\n ticket: ${JSON.stringify(ticket.val())} \r\n old val: ${JSON.stringify(oldTicket.val())}`)
+
+
       ticket.ref.child('/registrationStatus/checkedIn').once('value', (t) => {
         if(t.val() === true) {
 
