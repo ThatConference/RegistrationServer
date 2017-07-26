@@ -37,8 +37,25 @@ async function getCheckInTickets(){
 async function getTitoRegistrations() {
   options.url = `https://${process.env.TITO_API_HOST}/${process.env.TITO_API_PATH}/registrations`
   logger.info(`Calling tito to get registrations, ${options.url}`)
-
   return JSON.parse(await Request.get(options)).data
+
+  // return new Promise((resolve, reject) => {
+  //   Request.get(options, (error, response, body) => {
+  //     if(error){
+  //       console.log(error)
+  //       reject()
+  //     }
+  //     if(response.statusCode != 200 ){
+  //       Logger.error(`status code: ${response.statusCode}`)
+  //       reject()
+  //     }
+  //     console.log(body)
+  //     //JSON.parse(body).data
+  //     //resolve()
+  //     reject()
+  //   })
+  //
+  // })
 }
 
 async function populateDB ( database, reply ) {
@@ -80,7 +97,8 @@ const remapIntoOrders = (tickets) => {
     }
 
     let ticket = {
-      attendeeId: Helpers.createUniqueId(),
+      tcDBKey: 0, //db key, and stupid decision. returned from checkin MUST BE SET TO 0! We assume it's there to be set later.
+      tcId: Helpers.createUniqueId(), // attendeeId cause we need two different ids. Set by us.
       orderId: t.registration_reference,
       ticketId: t.reference,
       fullName: t.name,
