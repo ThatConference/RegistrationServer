@@ -39,7 +39,7 @@ module.exports = (database) => {
       resolve('Checked Into That Conference and Tito')
     }, () => {
       Logger.info("Add and CheckIn Rejected")
-      reject()
+      reject("Add and CheckIn Rejected")
     })
   }
 
@@ -49,7 +49,7 @@ module.exports = (database) => {
       resolve('NFC Tage Updates')
     }, () => {
       Logger.info(`NFC Tag Not Updated`)
-      reject()
+      reject(`NFC Tag Not Updated`)
     })
   }
 

@@ -60,21 +60,22 @@ async function getTitoRegistrations() {
 
 async function populateDB ( database, reply ) {
   let replyResult = {}
-  let [checkInList, regList] = await Promise.all([getCheckInTickets(), getTitoRegistrations()])
-  console.log(`check in list length: ${checkInList.length}`)
-  console.log(`regList in list length: ${regList.length}`)
+  let [checkInList, regList] = await Promise.all([getCheckInTickets(), getTitoRegistrations()]) // no catching failed promise...
 
-  Logger.debug(`Tito returned ${checkInList.length} tickets`)
-  Logger.debug(`Tito returned ${regList.length} registrations`)
+  Logger.info(`Tito returned ${checkInList.length} tickets on the checkin list`)
+  Logger.info(`Tito returned ${regList.length} registrations`)
 
   // Map the orders
   let orders = remapIntoOrders(checkInList)
+  Logger.info(`Total Tickets: ${orders.length}`)
   replyResult.orders = orders.length
 
   let mappedOrders = createOrderMap(orders)
+  Logger.info(`Mapped Order Size: ${mappedOrders.size}`)
   replyResult.mappedOrders = mappedOrders.size
 
   let finalOrders = updateOrderMap(mappedOrders, regList)
+  Logger.info(`Final Order Size: ${finalOrders.size}`)
   replyResult.finalOrders = finalOrders.size
 
   //map the orders in...
@@ -218,6 +219,13 @@ const addToDB = (orderMap, database) => {
   database.add(orderMap)
 }
 
+exports.addTicket = (database, ticket) => {
+  return new Promise((resolve, reject) => {
+
+    resolve(`added ${ticket.id}`)
+  })
+}
+
 exports.seed = (database, reply) => {
   populateDB(database, reply)
 }
@@ -249,7 +257,7 @@ exports.checkIn = (ticket, checkInList) => {
       }
 
       if(response.statusCode !== 201 ){
-        Logger.debug(`Checking in at Tito errored with status code: ${response.statusCode}`)
+        Logger.error(`Checking in at Tito errored with status code: ${response.statusCode}`)
         return reject(response.statusCode)
       }
 
@@ -258,7 +266,6 @@ exports.checkIn = (ticket, checkInList) => {
     })
   })
 }
-
 
 /*
 http://teamtito.github.io/tito-api-docs/#creating-a-new-check-in

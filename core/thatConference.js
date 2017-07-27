@@ -23,7 +23,7 @@ exports.addContact = (ticket) => {
       // POST: `vendor/api/contacts/create` returns int
       Request.post(options, (error, response, body) => {
         let uniqueId = parseInt(body)
-        Logger.info(`TC Contact Id Returned: ${uniqueId}`)
+        Logger.data(`TC Contact Id Returned: ${uniqueId}`)
 
         if(error){
           Logger.error('Add TC Contact Post Error: ${error}')
@@ -39,6 +39,7 @@ exports.addContact = (ticket) => {
       })
     } else{
       //don't check into that conference
+      Logger.info(`Ticket did not contain an NFC Tag. Not added to thatconference.com`)
       resolve({id: 0})
     }
 
@@ -59,15 +60,17 @@ exports.updateNfcTag = (ticket) => {
 
     options.url = `${process.env.THAT_CONFERENCE_URI}/${ticket.tcDBKey}/${nfcTagId}`
 
+    Logger.debug(`That Conference Contact Add Post Options = ${JSON.stringify(options)}`)
+
     Request.put(options, (error, response, body) => {
       if(error){
         Logger.error(error)
-        return reject()
+        return reject(error)
       }
 
-      if(response.statusCode != 200 ){
+      if(response.statusCode !== 200 ){
         Logger.error(`The Update Call To That Conference Errored -> \r\n status code: ${response.statusCode}`)
-        return reject()
+        return reject({statusCode: response.statusCode})
       }
 
       Logger.info(`TC Result - ${response.statusCode}, for Ticket \r\n ${JSON.stringify(ticket)}`)
@@ -113,10 +116,6 @@ const mapTicketToPayload = (ticket) => {
     LastName: ticket.lastName,
     Email: ticket.email,
     CompanyName: ticket.companyName,
-    Title: "ticket.title", //don't have, would need to get off order
-    City: "ticket.city",  // don't have, would need to get off order
-    State: "ticket.state", // don't have, would need to get off order
-    Country: "ticket.country", // don't have, would need to get off order
     Year: 2017
   }
 }

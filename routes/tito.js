@@ -1,19 +1,33 @@
-const Tito = require('../core/tito')
+const tito = require('../core/tito')
 const logger = require('../utility/logger')
 
+/*
+  only called to seed the db
+    then we rely on the webhook to populate from that point onward.
+*/
 exports.seed = (database) => {
   return function (request, reply) {
     logger.info('Tito Seed Called')
-    //Tito.getTickets(database, reply)
-    Tito.seed(database, reply)
+    tito.seed(database, reply)
   }
 }
 
-// exports.test = (request, reply) => {
-//   Winston.info('Tito Seed Called')
-//
-//   var data = typeof request.payload === 'string'
-//   ? JSON.parse(request.payload) : request.payload
-//
-//   Tito.getTickets(reply)
-// }
+//Called by the tito webhook.
+exports.addTicket = (database) => {
+  return function (request, reply) {
+    let ticket = typeof request.payload === 'string'
+      ? JSON.parse(request.payload) : request.payload;
+
+    logger.info(`adding new ticket`)
+
+    tito.addTicket(database, ticket)
+      .then( (response) => {
+        logger.info(response)
+        reply(response).code(201)
+      })
+      .catch( (error) => {
+        logger.error(error)
+        reply(error).code(400)
+      })
+  }
+}

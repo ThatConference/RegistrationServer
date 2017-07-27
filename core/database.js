@@ -27,7 +27,7 @@ const Database = (database) => {
           database.ref(`/Orders/${key}`).remove()
           logger.info(`Removed ticket - ${key}`)
         })
-      })
+    })
   }
 
   const addToQueue = async (task) => {

@@ -2,8 +2,8 @@ const logger = require('../utility/logger')
 
 exports.destroy = (database) => {
   return function (request, reply) {
-    logger.info('Database Destroy Called')
+    logger.info('Destroying Database was Called. Goodbye...')
     database.destroy()
-    reply('destroyed')
+    reply('destroyed').code(200)
   }
 }
