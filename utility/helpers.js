@@ -5,7 +5,7 @@
 
   exports.createUniqueId = () => {
 
-    let length = 8;
+    let length = 9;
 
     let ts = Date.now().toString();
     let parts = ts.split( "" ).reverse();

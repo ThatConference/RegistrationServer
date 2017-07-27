@@ -11,7 +11,7 @@ let options = {
 }
 
 exports.addContact = (ticket) => {
-  console.log("Add Contact Called")
+  Logger.info('Adding Contact To That Conference')
 
   return new Promise((resolve, reject) => {
     if (ticket.nfcTag) {
@@ -23,20 +23,19 @@ exports.addContact = (ticket) => {
       // POST: `vendor/api/contacts/create` returns int
       Request.post(options, (error, response, body) => {
         let uniqueId = parseInt(body)
-        Logger.info(`TC Result Unique Id - ${uniqueId}`)
+        Logger.info(`TC Contact Id Returned: ${uniqueId}`)
 
         if(error){
-          console.log(error)
-          // ?? Logger.error(`The Checkin Call To That Conference Errored -> \r\n status code: ${response.statusCode} \r\n error: ${JSON.stringify(error)} \r\n ticket: ${JSON.stringify(payload)}`)
-          reject()
+          Logger.error('Add TC Contact Post Error: ${error}')
+          return reject()
         }
-        if(response.statusCode != 200 ){
-          Logger.error(`The Checkin Call To That Conference Errored -> \r\n status code: ${response.statusCode} \r\n ticket: ${JSON.stringify(payload)}`)
-          reject()
+        if(response.statusCode !== 200 ){
+          Logger.error(`The Checkin Call To That Conference Returned != 200 -> \r\n status code: ${response.statusCode} \r\n payload: ${JSON.stringify(payload)}`)
+          return reject()
         }
 
         Logger.info(`TC Result - ${response.statusCode}, for ${payload.AttendeeID} \r\n RESULT - ${JSON.stringify(payload)}`)
-        resolve({id: uniqueId})
+        return resolve({id: uniqueId})
       })
     } else{
       //don't check into that conference
@@ -47,26 +46,32 @@ exports.addContact = (ticket) => {
 }
 
 exports.updateNfcTag = (ticket) => {
-  console.log('update contact called')
+  Logger.debug('Calling That Conference to PUT new tagid')
+
   return new Promise((resolve, reject) => {
 
     // PUT: `vendor/api/contacts/{id}` ???
     // vendor/api/contacts/{Id}/{New NFC Tag}
-    options.url = `${process.env.THAT_CONFERENCE_URI}/${ticket.tcDBKey}/${ticket.nfcTag}`
+
+    let nfcTagId = '0'
+    if(ticket.nfcTag)
+        nfcTagId = ticket.nfcTag
+
+    options.url = `${process.env.THAT_CONFERENCE_URI}/${ticket.tcDBKey}/${nfcTagId}`
 
     Request.put(options, (error, response, body) => {
       if(error){
-        console.log(error)
-        reject()
+        Logger.error(error)
+        return reject()
       }
 
       if(response.statusCode != 200 ){
         Logger.error(`The Update Call To That Conference Errored -> \r\n status code: ${response.statusCode}`)
-        reject()
+        return reject()
       }
 
       Logger.info(`TC Result - ${response.statusCode}, for Ticket \r\n ${JSON.stringify(ticket)}`)
-      resolve('updated nfc tag was successful')
+      return resolve('updated nfc tag was successful')
     })
   })
 

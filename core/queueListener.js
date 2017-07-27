@@ -19,7 +19,7 @@ module.exports = (database) => {
       let t = ticket.val()
       if ( t.tcDBKey === 0 ) {
         Logger.info(`Adding and Checking In`)
-        addAndCheckIn(t, ticketPath, resolve, reject)
+        addAndCheckIn(t, ticketPath, process.env.TITO_CHECKIN_LIST_ID, resolve, reject)
       } else {
         Logger.info(`Updating NFC Tag`)
         updateNfcTag(t, resolve, reject)
@@ -27,17 +27,18 @@ module.exports = (database) => {
     })
   })
 
-  const addAndCheckIn = (ticket, ticketPath, resolve, reject) => {
-    Promise.all([ThatConference.addContact(ticket)]).then( ([checkIn]) => {
+  const addAndCheckIn = (ticket, ticketPath, checkInList, resolve, reject) => {
+    Promise.all([ThatConference.addContact(ticket), Tito.checkIn(ticket, checkInList)]).then( ([checkIn, titoCheckedIn]) => {
       let update = {}
       update[`${ticketPath}/tcDBKey`] = checkIn.id
       update[`${ticketPath}/registrationStatus/tcCheckedIn`] = true
+      update[`${ticketPath}/registrationStatus/titoCheckedIn`] = true
       database.ref().update(update)
 
       Logger.info("resolved")
-      resolve('checked in')
+      resolve('Checked Into That Conference and Tito')
     }, () => {
-      Logger.info("rejected")
+      Logger.info("Add and CheckIn Rejected")
       reject()
     })
   }
@@ -60,5 +61,4 @@ module.exports = (database) => {
       process.exit(0)
     })
   })
-
 }

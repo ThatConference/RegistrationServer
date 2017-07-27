@@ -1,6 +1,6 @@
 const Request = require('request-promise-native')
 const Moment = require('moment')
-const logger = require('../utility/logger')
+const Logger = require('../utility/logger')
 const Helpers = require('../utility/helpers')
 
 let options = {
@@ -18,8 +18,8 @@ let options = {
 const registrationDateCutoff = Moment(process.env.LATE_REGISTRATION_DATE, 'YYYY-MM-DD')
 
 async function getCheckInTickets(){
-  options.url = `https://${process.env.TITO_API_V1_HOST}/${process.env.TITO_CHECKIN_LIST}`
-  logger.info(`Calling tito to get check in list, ${options.url}`)
+  options.url = `https://${process.env.TITO_API_V1_HOST}/${process.env.TITO_CHECKIN_LIST_URI}/${process.env.TITO_CHECKIN_LIST_ID}`
+  Logger.info(`Calling tito to get check in list, ${options.url}`)
   let checkinListMeta = JSON.parse(await Request.get(options))
 
   let tickets = []
@@ -36,7 +36,7 @@ async function getCheckInTickets(){
 
 async function getTitoRegistrations() {
   options.url = `https://${process.env.TITO_API_HOST}/${process.env.TITO_API_PATH}/registrations`
-  logger.info(`Calling tito to get registrations, ${options.url}`)
+  Logger.info(`Calling tito to get registrations, ${options.url}`)
   return JSON.parse(await Request.get(options)).data
 
   // return new Promise((resolve, reject) => {
@@ -64,8 +64,8 @@ async function populateDB ( database, reply ) {
   console.log(`check in list length: ${checkInList.length}`)
   console.log(`regList in list length: ${regList.length}`)
 
-  logger.debug(`Tito returned ${checkInList.length} tickets`)
-  logger.debug(`Tito returned ${regList.length} registrations`)
+  Logger.debug(`Tito returned ${checkInList.length} tickets`)
+  Logger.debug(`Tito returned ${regList.length} registrations`)
 
   // Map the orders
   let orders = remapIntoOrders(checkInList)
@@ -85,7 +85,10 @@ async function populateDB ( database, reply ) {
 }
 
 const remapIntoOrders = (tickets) => {
-  logger.debug(`Remapping Tickets into Orders....`)
+  Logger.debug(`Remapping Tickets into Orders....`)
+
+  let uniqueTCIds = [] //will be used to store unique id's and validate later.
+
   return tickets.map( (t) => {
 
     let newOrder = {
@@ -96,9 +99,22 @@ const remapIntoOrders = (tickets) => {
       tickets: []
     }
 
+    //Get a "unique" id
+    let uniqueId = Helpers.createUniqueId()
+
+    //lookup in the array if we find one.
+    while ( uniqueTCIds.includes(uniqueId) ) {
+      //we found a unique id so let's try again
+      Logger.debug(`Found a tcID that wasn't unique. Trying again.`)
+      uniqueId = Helpers.createUniqueId()
+    }
+    //add the "unique id" to the array to check in the next cycle
+    uniqueTCIds.push(uniqueId)
+
     let ticket = {
       tcDBKey: 0, //db key, and stupid decision. returned from checkin MUST BE SET TO 0! We assume it's there to be set later.
-      tcId: Helpers.createUniqueId(), // attendeeId cause we need two different ids. Set by us.
+      tcId: uniqueId, // attendeeId cause we need two different ids. Set by us.
+      titoTicketSlug: t.slug,
       orderId: t.registration_reference,
       ticketId: t.reference,
       fullName: t.name,
@@ -157,8 +173,8 @@ const remapIntoOrders = (tickets) => {
 }
 
 const createOrderMap = (orders) => {
-  logger.debug(`Creating Order Map.`)
-  logger.debug(`Total Before Orders: ${orders.length}`)
+  Logger.debug(`Creating Order Map.`)
+  Logger.debug(`Total Before Orders: ${orders.length}`)
 
   let orderMap = new Map()
   for (let order of orders) {
@@ -172,7 +188,7 @@ const createOrderMap = (orders) => {
       orderMap.set(key, value)
   }
 
-  logger.debug(`Total Unique Orders: ${orderMap.size}`)
+  Logger.debug(`Total Unique Orders: ${orderMap.size}`)
 
   return orderMap
 }
@@ -204,4 +220,94 @@ const addToDB = (orderMap, database) => {
 
 exports.seed = (database, reply) => {
   populateDB(database, reply)
+}
+
+exports.checkIn = (ticket, checkInList) => {
+
+  let options = {
+    //    https://api.tito.io/v2/an-account/awesome-conf/checkin_lists/awesome-conf-check-in-lists/checkins
+    url: `https://${process.env.TITO_API_HOST}/v2/${process.env.TITO_CHECKIN_LIST_URI}/${process.env.TITO_CHECKIN_LIST_ID}/checkins`,
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Token token=${process.env.TITO_API_TOKEN}`
+    },
+    json: true
+  }
+
+  return new Promise((resolve, reject) => {
+    const payload = mapCheckinPayload(ticket.titoTicketSlug, checkInList)
+
+    Logger.debug(`Tito Checkin Payload = ${JSON.stringify(payload)}`)
+    Logger.debug(`Tito Checkin Post Options = ${JSON.stringify(options)}`)
+
+    options.body = payload
+
+    Request.post(options, (error, response, body) => {
+      if(error){
+        Logger.error(error)
+        return reject(error)
+      }
+
+      if(response.statusCode !== 201 ){
+        Logger.debug(`Checking in at Tito errored with status code: ${response.statusCode}`)
+        return reject(response.statusCode)
+      }
+
+      Logger.info(`Tito checkin success for ticket \r\n ${JSON.stringify(ticket)}`)
+      return resolve('Checked In At Tito')
+    })
+  })
+}
+
+
+/*
+http://teamtito.github.io/tito-api-docs/#creating-a-new-check-in
+https://api.tito.io/v2/an-account/awesome-conf/checkin_lists/awesome-conf-check-in-lists/checkins
+{
+  "data": {
+    "type": "checkins",
+    "attributes": {
+      "created-at": "2016-12-01T08:30:00"
+    },
+    "relationships": {
+      "checkin-list": {
+        "data": {
+          "type": "checkin-lists",
+          "id": "awesomeconf-check-in-list"
+        }
+      },
+      "ticket": {
+        "data": {
+          "type": "tickets",
+          "id": "paul-awesomeconf-ticket"
+        }
+      }
+    }
+  }
+}
+*/
+
+const mapCheckinPayload = (titoTicketSlug, checkinList ) => {
+  return {
+    data: {
+      type: 'checkins',
+      attributes: {
+        ["created-at"]: Moment().utc().format(),
+      },
+      relationships: {
+        ["checkin-list"]: {
+          data: {
+            type: 'checkin-lists',
+            id: checkinList
+          }
+        },
+        ticket: {
+         data: {
+           type: 'tickets',
+           id: titoTicketSlug
+          }
+        }
+      }
+    }
+  }
 }

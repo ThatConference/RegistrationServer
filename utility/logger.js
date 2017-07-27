@@ -28,7 +28,7 @@ let logger = new (Winston.Logger)({
 })
 
 logger.add(Winston.transports.Console, {
-  level: 'info',
+  level: 'error',
   prettyPrint: true,
   colorize: true,
   silent: false,
