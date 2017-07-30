@@ -222,6 +222,16 @@ const addToDB = (orderMap, database) => {
 exports.addTicket = (database, ticket) => {
   return new Promise((resolve, reject) => {
 
+    /*
+       We have our own order/ticket graph.
+       this ticket is slightly different which has all the data needed
+
+       before trying to save to the DB we have to check if an order already exists.
+
+       then either add or update
+    */
+
+
     resolve(`added ${ticket.id}`)
   })
 }

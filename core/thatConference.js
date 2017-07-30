@@ -26,12 +26,12 @@ exports.addContact = (ticket) => {
         Logger.data(`TC Contact Id Returned: ${uniqueId}`)
 
         if(error){
-          Logger.error('Add TC Contact Post Error: ${error}')
-          return reject()
+          Logger.error(`Add TC Contact Post Error: ${error}`)
+          return reject(error)
         }
         if(response.statusCode !== 200 ){
           Logger.error(`The Checkin Call To That Conference Returned != 200 -> \r\n status code: ${response.statusCode} \r\n payload: ${JSON.stringify(payload)}`)
-          return reject()
+          return reject(error)
         }
 
         Logger.info(`TC Result - ${response.statusCode}, for ${payload.AttendeeID} \r\n RESULT - ${JSON.stringify(payload)}`)

@@ -8,8 +8,28 @@ module.exports = (database) => {
   Logger.info(`starting queue listeners`)
   //let ticketsDB = database.ref('Orders')
 
-  let queueRef = database.ref('queue');
-  let queue = new Queue(queueRef, (data, progress, resolve, reject) => {
+  let queueRef = database.ref('queue')
+
+  /*
+
+  default spec although we have a modified one on the queue to retry
+
+  "default_spec": {
+    "start_state": null,
+    "in_progress_state": "in_progress",
+    "finished_state": null,
+    "error_state": "error",
+    "timeout": 300000, // 5 minutes
+    "retries": 0 // don't retry
+  }
+  */
+
+  var queueOptions = {
+    specId: 'regServerSpec',
+    numWorkers: 5
+  }
+
+  let queue = new Queue(queueRef, queueOptions, (data, progress, resolve, reject) => {
     Logger.info(`Working item \r\n ${JSON.stringify(data)}`)
     progress(25)
 
@@ -18,8 +38,19 @@ module.exports = (database) => {
 
       let t = ticket.val()
       if ( t.tcDBKey === 0 ) {
-        Logger.info(`Adding and Checking In`)
-        addAndCheckIn(t, ticketPath, process.env.TITO_CHECKIN_LIST_ID, resolve, reject)
+        Logger.info(`Checking Into That Conference and Tito`)
+        Promise.all([
+          checkInAtThatConference(t, ticketPath, t.registrationStatus.tcCheckedIn, database ),
+          checkInAtTito(t, ticketPath, process.env.TITO_CHECKIN_LIST_ID, t.registrationStatus.titoCheckedIn, database)
+        ])
+        .then ((results) => {
+          Logger.info(`Checked Into That Conference and Tito`)
+          resolve('Checked Into That Conference and Tito')
+        })
+        .catch( (error) => {
+          Logger.error(`IS NOT -- Checked Into That Conference and Tito`)
+          reject(`IS NOT -- Checked Into That Conference and Tito`)
+        })
       } else {
         Logger.info(`Updating NFC Tag`)
         updateNfcTag(t, resolve, reject)
@@ -27,30 +58,63 @@ module.exports = (database) => {
     })
   })
 
-  const addAndCheckIn = (ticket, ticketPath, checkInList, resolve, reject) => {
-    Promise.all([ThatConference.addContact(ticket), Tito.checkIn(ticket, checkInList)]).then( ([checkIn, titoCheckedIn]) => {
-      let update = {}
-      update[`${ticketPath}/tcDBKey`] = checkIn.id
-      update[`${ticketPath}/registrationStatus/tcCheckedIn`] = true
-      update[`${ticketPath}/registrationStatus/titoCheckedIn`] = true
-      database.ref().update(update)
+  const checkInAtThatConference = (ticket, ticketPath, isCheckedIn, database) => {
+    return new Promise((resolve, reject) => {
+      if(!isCheckedIn) {
+        ThatConference.addContact(ticket)
+          .then( (checkIn) => {
+            let update = {}
+            update[`${ticketPath}/tcDBKey`] = checkIn.id
+            update[`${ticketPath}/registrationStatus/tcCheckedIn`] = true
+            database.ref().update(update)
 
-      Logger.info("resolved")
-      resolve('Checked Into That Conference and Tito')
-    }, () => {
-      Logger.info("Add and CheckIn Rejected")
-      reject("Add and CheckIn Rejected")
+            Logger.info(`Checked Into That Conference and Tito - resolved`)
+            resolve('Checked Into That Conference and Tito')
+          })
+          .catch( (error) => {
+            Logger.error(`Ticket Not Checked Into That Conference`)
+            reject(`Ticket Not Checked Into That Conference`)
+          })
+      } else {
+        Logger.info(`Ticket Already Checked into That Conference`)
+        resolve(`Ticket Already Checked into That Conference`)
+      }
+    })
+  }
+
+  const checkInAtTito = (ticket, ticketPath, checkInList, isCheckedIn, database) => {
+    return new Promise((resolve, reject) => {
+      if (!isCheckedIn) {
+        Tito.checkIn(ticket, checkInList)
+        .then( (titoCheckedIn) => {
+          let update = {}
+          update[`${ticketPath}/registrationStatus/titoCheckedIn`] = true
+          database.ref().update(update)
+
+          Logger.info(`Checked In At Tito`)
+          resolve('Checked Into Tito')
+        })
+        .catch( (error) => {
+          Logger.error(`Tito CheckIn Rejected`)
+          reject(`Tito CheckIn Rejected`)
+        })
+      } else {
+        Logger.info(`Ticket already checked into tito`)
+        resolve(`Ticket already checked into tito`)
+      }
     })
   }
 
   const updateNfcTag = (ticket, resolve, reject) => {
-    Promise.all([ThatConference.updateNfcTag(ticket)]).then( ([nfcTagResults]) => {
-      Logger.info(`${nfcTagResults}`)
-      resolve('NFC Tage Updates')
-    }, () => {
-      Logger.info(`NFC Tag Not Updated`)
-      reject(`NFC Tag Not Updated`)
-    })
+    ThatConference.updateNfcTag(ticket)
+      .then( (nfcTagResults) => {
+        Logger.info(`${nfcTagResults}`)
+        resolve('NFC Tage Updates')
+      })
+      .catch ((error) => {
+        Logger.error(`NFC Tag Not Updated, ${error}`)
+        reject(`NFC Tag Not Updated`)
+      })
   }
 
   process.on('SIGINT', function() {
