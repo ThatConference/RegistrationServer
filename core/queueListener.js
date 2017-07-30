@@ -1,7 +1,7 @@
 const Queue          = require('firebase-queue')
 const Logger         = require('../utility/logger')
 
-const ThatConference = require('./thatconference')
+const ThatConference = require('./thatConference')
 const Tito           = require('./tito')
 
 module.exports = (database) => {
@@ -26,7 +26,7 @@ module.exports = (database) => {
 
   var queueOptions = {
     specId: 'regServerSpec',
-    numWorkers: 5
+    numWorkers: parseInt(process.env.QUEUE_WORKERS)
   }
 
   let queue = new Queue(queueRef, queueOptions, (data, progress, resolve, reject) => {
