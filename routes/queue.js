@@ -9,7 +9,7 @@ exports.add = (database) => {
 
     database.addToQueue(task)
       .then( (response) => {
-        logger.info(response)
+        logger.info(`added to queue`)
         reply(`queued: ${JSON.stringify(request.payload)}`).code(201)
       })
       .catch( (error) => {

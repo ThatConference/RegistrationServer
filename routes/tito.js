@@ -22,7 +22,7 @@ exports.addTicket = (database) => {
 
     tito.addTicket(database, ticket)
       .then( (response) => {
-        logger.info(response)
+        logger.info(`response: ${response}`)
         reply(response).code(201)
       })
       .catch( (error) => {

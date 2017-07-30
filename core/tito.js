@@ -255,8 +255,8 @@ exports.checkIn = (ticket, checkInList) => {
   return new Promise((resolve, reject) => {
     const payload = mapCheckinPayload(ticket.titoTicketSlug, checkInList)
 
-    Logger.debug(`Tito Checkin Payload = ${JSON.stringify(payload)}`)
-    Logger.debug(`Tito Checkin Post Options = ${JSON.stringify(options)}`)
+    Logger.data(`Tito Checkin Payload = ${JSON.stringify(payload)}`)
+    Logger.data(`Tito Checkin Post Options = ${JSON.stringify(options)}`)
 
     options.body = payload
 

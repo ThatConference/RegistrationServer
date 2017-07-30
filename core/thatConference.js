@@ -10,14 +10,15 @@ let options = {
   json: true
 }
 
-exports.addContact = (ticket) => {
-  Logger.info('Adding Contact To That Conference')
+exports.addContact = (order, ticket) => {
+  Logger.trace('Adding Contact To That Conference')
 
   return new Promise((resolve, reject) => {
     if (ticket.nfcTag) {
       options.url = `${process.env.THAT_CONFERENCE_URI}/create`
 
-      const payload = mapTicketToPayload(ticket)
+      const payload = mapTicketToPayload(order, ticket)
+      Logger.data(`That Conference Add Contact Payload: ${JSON.stringify(payload)}`)
       options.body = payload
 
       // POST: `vendor/api/contacts/create` returns int
@@ -40,14 +41,14 @@ exports.addContact = (ticket) => {
     } else{
       //don't check into that conference
       Logger.info(`Ticket did not contain an NFC Tag. Not added to thatconference.com`)
-      resolve({id: 0})
+      resolve({id: -1})
     }
 
   })
 }
 
 exports.updateNfcTag = (ticket) => {
-  Logger.debug('Calling That Conference to PUT new tagid')
+  Logger.trace('Calling That Conference to PUT new tagid')
 
   return new Promise((resolve, reject) => {
 
@@ -107,15 +108,15 @@ exports.deleteCheckin = (ticket) => {
   }
 */
 
-const mapTicketToPayload = (ticket) => {
+const mapTicketToPayload = (order, ticket) => {
   return {
-    Id: ticket.tcDBKey, // TODO. What is the real name
-    AttendeeID: ticket.tcId,
-    NFCId: ticket.nfcTag,
-    FirstName: ticket.firstName,
-    LastName: ticket.lastName,
-    Email: ticket.email,
-    CompanyName: ticket.companyName,
+    Id: ticket.tcDBKey,
+    AttendeeID: ticket.tcId, //required
+    NFCId: ticket.nfcTag, //required
+    FirstName: ticket.firstName || order.name.split(' ')[0],                  //required
+    LastName: ticket.lastName || order.name.split(' ')[1] || 'Not Supplied',  //required
+    Email: ticket.email || order.email, //required
+    CompanyName: ticket.companyName || order.company,
     Year: 2017
   }
 }
