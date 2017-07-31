@@ -133,7 +133,7 @@ const remapIntoOrders = (tickets) => {
 
       shirtSize: t.answers.reduce( (acc, current) => {
         if (current.question.toUpperCase().includes('t-shirt'.toUpperCase()))
-          return acc + current.response
+          return acc + bitShiftShirts(current.response)
         return acc
       }, ''),
 
@@ -171,6 +171,19 @@ const remapIntoOrders = (tickets) => {
 
     return [t.registration_reference, newOrder]
   })
+}
+
+//youth shirts had a few sizes in that we're wrong. We need to adjust.
+const bitShiftShirts = (shirt) => {
+  let newShirt = shirt
+
+  if (shirt.toUpperCase().includes('Youth XS'.toUpperCase()))
+    newShirt = 'Youth S     [6-8]' // hardcoded based on what is in tito, has to match
+
+  if (shirt.toUpperCase().includes('Youth XL'.toUpperCase()))
+    newShirt = 'Men X-Small' // hardcoded based on what is in tito, has to match
+
+  return newShirt
 }
 
 const createOrderMap = (orders) => {
