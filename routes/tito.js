@@ -1,4 +1,5 @@
 const tito = require('../core/tito')
+const order = require('../core/order')
 const logger = require('../utility/logger')
 
 /*
@@ -13,14 +14,14 @@ exports.seed = (database) => {
 }
 
 //Called by the tito webhook.
-exports.addTicket = (database) => {
+exports.addOrder = (database) => {
   return function (request, reply) {
     let ticket = typeof request.payload === 'string'
-      ? JSON.parse(request.payload) : request.payload;
+      ? JSON.parse(request.payload) : request.payload
 
-    logger.info(`adding new ticket`)
+    logger.info(`adding new from tito webhook`)
 
-    tito.addTicket(database, ticket)
+    order.add(database, ticket)
       .then( (response) => {
         logger.info(`response: ${response}`)
         reply(response).code(201)

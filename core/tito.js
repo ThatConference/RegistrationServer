@@ -2,6 +2,8 @@ const Request = require('request-promise-native')
 const Moment = require('moment')
 const Logger = require('../utility/logger')
 const Helpers = require('../utility/helpers')
+const TitoHelpers = require('../utility/titoHelpers')
+
 
 let options = {
   url: '',
@@ -125,29 +127,10 @@ const remapIntoOrders = (tickets) => {
       email: t.email,
       staffMember: '',
 
-      companyName: t.answers.reduce( (acc, current) => {
-        if (current.question.toUpperCase().includes('Company Name'.toUpperCase()))
-          return acc + current.response
-        return acc
-      }, ''),
-
-      shirtSize: t.answers.reduce( (acc, current) => {
-        if (current.question.toUpperCase().includes('t-shirt'.toUpperCase()))
-          return acc + bitShiftShirts(current.response)
-        return acc
-      }, ''),
-
-      dietaryRestrictions: t.answers.reduce( (acc, current) => {
-        if (current.question.toUpperCase().includes('dietary'.toUpperCase()))
-          return acc + current.response
-        return acc
-      }, ''),
-
-      isFirstTimeCamper: Boolean(t.answers.reduce( (acc, current) => {
-        if (current.response.toUpperCase().includes('first time camper'.toUpperCase()))
-          return acc + 1
-        return acc
-      }, 0)),
+      companyName: getCompanyName(t.answers),
+      shirtSize: getShirtSize(t.answers),
+      dietaryRestrictions: hasDietaryRestrictions(t.answers),
+      isFirstTimeCamper: Boolean(isFirstTimeCamper(t.answers)),
 
       nfcTag: '',
 
@@ -158,14 +141,10 @@ const remapIntoOrders = (tickets) => {
       }
     }
 
-    if(ticket.type.toUpperCase().includes('Expo'.toUpperCase()))
-      newOrder.isSponsor = true;
-
-    if(ticket.type.toUpperCase().includes('Counselor'.toUpperCase())) // This would include sponsored speakers. Not sure if that is ok?
-      newOrder.isSpeaker = true;
-
-    if(ticket.type.toUpperCase().includes('Sponsored Counselor'.toUpperCase()))
-      newOrder.isSponsoredSpeaker = true;
+    //todo bug... this will always get reset..
+    newOrder.isSponsor = newOrder.isSponsor ? true : TitoHelpers().isSponsor(ticket.type)
+    newOrder.isSpeaker = newOrder.isSpeaker ? true : TitoHelpers().isSpeaker(ticket.type) // This would include sponsored speakers. Not sure if that is ok?
+    newOrder.isSponsoredSpeaker = newOrder.isSponsoredSpeaker ? true : TitoHelpers().isSponsoredSpeaker(ticket.type)
 
     newOrder.tickets.push(ticket)
 
@@ -173,17 +152,35 @@ const remapIntoOrders = (tickets) => {
   })
 }
 
-//youth shirts had a few sizes in that we're wrong. We need to adjust.
-const bitShiftShirts = (shirt) => {
-  let newShirt = shirt
+const getCompanyName = (answers) => {
+  return answers.reduce( (acc, current) => {
+    if (current.question.toUpperCase().includes('Company Name'.toUpperCase()))
+      return acc + current.response
+    return acc
+  }, '')
+}
+const getShirtSize = (answers) => {
+  return answers.reduce( (acc, current) => {
+    if (current.question.toUpperCase().includes('t-shirt'.toUpperCase()))
+      return acc + TitoHelpers().bitShiftShirts(current.response)
+    return acc
+  }, '')
+}
 
-  if (shirt.toUpperCase().includes('Youth XS'.toUpperCase()))
-    newShirt = 'Youth S     [6-8]' // hardcoded based on what is in tito, has to match
+const hasDietaryRestrictions = (answers) => {
+  return answers.reduce( (acc, current) => {
+    if (current.question.toUpperCase().includes('dietary'.toUpperCase()))
+      return acc + current.response
+    return acc
+  }, '')
+}
 
-  if (shirt.toUpperCase().includes('Youth XL'.toUpperCase()))
-    newShirt = 'Men X-Small' // hardcoded based on what is in tito, has to match
-
-  return newShirt
+const isFirstTimeCamper = (answers) => {
+  return answers.reduce( (acc, current) => {
+    if (current.response.toUpperCase().includes('first time camper'.toUpperCase()))
+      return acc + 1
+    return acc
+  }, 0)
 }
 
 const createOrderMap = (orders) => {
@@ -230,23 +227,6 @@ const updateOrderMap = (orderMap, registrations) => {
 
 const addToDB = (orderMap, database) => {
   database.add(orderMap)
-}
-
-exports.addTicket = (database, ticket) => {
-  return new Promise((resolve, reject) => {
-
-    /*
-       We have our own order/ticket graph.
-       this ticket is slightly different which has all the data needed
-
-       before trying to save to the DB we have to check if an order already exists.
-
-       then either add or update
-    */
-
-
-    resolve(`added ${ticket.id}`)
-  })
 }
 
 exports.seed = (database, reply) => {
