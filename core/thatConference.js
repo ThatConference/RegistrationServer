@@ -18,12 +18,15 @@ exports.addContact = (order, ticket) => {
       options.url = `${process.env.THAT_CONFERENCE_URI}/create`
 
       const payload = mapTicketToPayload(order, ticket)
-      Logger.data(`That Conference Add Contact Payload: ${JSON.stringify(payload)}`)
+      Logger.debug(`That Conference Add Contact Payload:`)
+      Logger.data(payload)
+
       options.body = payload
 
       // POST: `vendor/api/contacts/create` returns int
       Request.post(options, (error, response, body) => {
         let uniqueId = parseInt(body)
+
         Logger.data(`TC Contact Id Returned: ${uniqueId}`)
 
         if(error){
