@@ -32,18 +32,16 @@ exports.add = (database, registration) => {
 
     Logger.data(`New regisration mapped to: ${JSON.stringify(newOrder)}`)
 
-    /*
-    TODO we're gonna need to check if it already exists.....
-    if it was, need to push new tickets to it?? Not sure...
-    */
-
-    resolve(`added ticket # ${newOrder.orderNumber}`)
-    //addNewOrderToDB(newOrder, database)
+    database.addNewOrder(newOrder)
+      .then( (response) => {
+        Logger.info(`added ${JSON.stringify(response)}`)
+        resolve(`added ${newOrder.orderNumber}`)
+      })
+      .catch( (error) => {
+        Logger.error(`FAIL adding order # ${newOrder.orderNumber} : ${JSON.stringify(error)}`)
+        reject(`FAIL adding order # ${newOrder.orderNumber}`)
+      })
   })
-}
-
-const addNewOrderToDB = (newOrder, database) => {
-  database.addNewOrder(newOrder)
 }
 
 const createOrder = (registration) => {
@@ -124,21 +122,3 @@ const isFirstTimeCamper = (answers) => {
     return acc
   }, 0)
 }
-
-//Call and get the regisration
-//https://api.tito.io/v2/an-account/awesome-conf/registrations/paul-awesomeconf-registration
-
-// let url = `https://api.tito.io/v2/that-conference/that-conference-2017/registrations/${ticket.id}?include=tickets`
-// options.url = url
-//
-// Logger.debug(`Calling tito tito registration for ${ticket.id}`)
-// Logger.data(`request options ${options.url}`)
-//
-// Request.get(options, (error, response, body) => {
-//   if(error){
-//     let message = `Call to get regisration for ${ticket.id} failed: ${JSON.stringify(error)}`
-//     Logger.error(message)
-//     return reject(message)
-//   }
-//
-// })

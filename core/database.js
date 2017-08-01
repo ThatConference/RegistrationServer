@@ -35,69 +35,68 @@ const Database = (database) => {
     await tasks.push(task);
   }
 
-  return { add, addToQueue, destroy }
+  const addNewOrder = (order) => {
+    return new Promise((resolve, reject) => {
+      logger.trace(`adding or updating new webhook order ( ${order.orderNumber} ) to db`)
+
+      const orderPath = `Orders/${order.orderNumber}`
+      database.ref(orderPath).once('value')
+        .then((snapshot) => {
+          logger.debug(`snapshot returned = ${snapshot.val()}`)
+
+          if(snapshot.val() === null) {
+            logger.debug(`Did not find order at ${orderPath}. creating.`)
+
+            database.ref(`Orders/${order.orderNumber}`).set(order, (error) => {
+              if(error)
+                return reject(error)
+
+              return resolve(`order created`)
+            })
+          } else {
+            logger.info(`order already exists, updating...`)
+            let returnedTicket = snapshot.val()
+
+            //Loop through all the tickets we have on the registration
+            for( let ticketId of Object.keys(order.tickets) ) {
+
+              //Check to see if the db has the ticket already
+              if (returnedTicket.tickets.hasOwnProperty(ticketId)) {
+                logger.debug('db already contained ticket... updating ticket')
+                let updatedTicket = order.tickets[ticketId]
+
+                //Remove properties that we don't want to overwrite
+                delete updatedTicket.tcDBKey
+                delete updatedTicket.tcId
+                delete updatedTicket.nfcTag
+                delete updatedTicket.tcDBKey
+                delete updatedTicket.registrationStatus
+
+                logger.debug(`ticket graph to update`)
+                logger.data(updatedTicket)
+
+                database.ref(`Orders/${order.orderNumber}/tickets/${updatedTicket.ticketId}`).update(updatedTicket, (error) => {
+                  if(error)
+                    return reject(error)
+
+                  return resolve(`order tickets updated - ${ticketId}`)
+                })
+              } else {
+                logger.debug(`db did not contain ticket ${ticketId}`)
+                database.ref(`Orders/${order.orderNumber}/tickets/${ticketId}`).set(order.tickets[ticketId], (error) => {
+                  if(error)
+                    return reject(error)
+
+                  return resolve(`order tickets added - ${ticketId}`)
+                })
+              }
+            }
+          }
+        })
+    })
+  }
+
+  return { add, addToQueue, destroy, addNewOrder }
 }
 
 module.exports = Database
-
-/* With Jack
-
-const logger = require('../utility/logger')
-
-const adder = (state) => (tickets) => {
-  for (let ticket of tickets.data) {
-    state.firebase.database().ref('Tickets/' + ticket.id).set({
-      ticket: ticket,
-      checkedIn: false
-    })
-  }
-}
-
-const destroyer = (state) => () =>  {
-  state.ticketsDB.once('value')
-    .then((snapshot) => {
-      snapshot.forEach((childSnapshot) => {
-        const key = childSnapshot.key
-        state.firebase.database().ref('/Tickets/' + key).remove()
-    })
-  })
-}
-
-const Database = (firebase) => {
-  const ticketsDB = firebase.database().ref("Tickets")
-  const add = adder({ firebase })
-  const destroy = destroyer({ firebase })
-
-  return { add, destroy }
-}
-
-*/
-
-//
-// function () {
-// //let adaRef = Firebase.database().ref("Tickets");
-// var query = Firebase.database().ref("Tickets").orderByKey();
-// query.once("value")
-//   .then(function(snapshot) {
-//     snapshot.forEach(function(childSnapshot) {
-//       // key will be "ada" the first time and "alan" the second time
-//       var key = childSnapshot.key
-//       // childData will be the actual contents of the child
-//       var childData = childSnapshot.val()
-//       console.log(key, childData)
-//   })
-// });
-//
-//
-// var ticketRef = Firebase.database().ref('Tickets');
-// for(i = 0; i < 10; i++) {
-//   var newTicket = ticketRef.push({
-//     'user_id': i,
-//     'text': 'ASDF, ASFD'
-//   });
-//   // newTicket.set({
-//   //   'user_id': i,
-//   //   'text': 'ASDF, ASFD'
-//   // });
-// }
-//
