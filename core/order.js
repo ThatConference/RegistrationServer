@@ -23,7 +23,6 @@ exports.add = (database, registration) => {
 
       let mappedTicket = remapTicket(newOrder.orderNumber, uniqueId, ticket)
 
-      console.log("CLARK", mappedTicket[`${ticket.reference}`].type)
       newOrder.isSponsor = newOrder.isSponsor ? true : TitoHelpers().isSponsor(mappedTicket[`${ticket.reference}`].type)
       newOrder.isSpeaker = newOrder.isSpeaker ? true : TitoHelpers().isSpeaker(mappedTicket[`${ticket.reference}`].type)
       newOrder.isSponsoredSpeaker = newOrder.isSponsoredSpeaker ? true : TitoHelpers().isSponsoredSpeaker(mappedTicket[`${ticket.reference}`].type)
@@ -31,7 +30,7 @@ exports.add = (database, registration) => {
       Object.assign(newOrder.tickets, mappedTicket)
     }
 
-    console.log(JSON.stringify(newOrder))
+    Logger.data(`New regisration mapped to: ${JSON.stringify(newOrder)}`)
 
     /*
     TODO we're gonna need to check if it already exists.....
@@ -83,7 +82,7 @@ const remapTicket = (orderNumber, tcId, ticket) => {
 
       shirtSize: getShirtSize(ticket.answers),
       dietaryRestrictions: hasDietaryRestrictions(ticket.answers),
-      //isFirstTimeCamper: Boolean(isFirstTimeCamper(ticket.answers)),
+      isFirstTimeCamper: Boolean(isFirstTimeCamper(ticket.answers)),
 
       nfcTag: '',
       registrationStatus: {
@@ -111,13 +110,20 @@ const hasDietaryRestrictions = (answers) => {
   }, '')
 }
 
-// const isFirstTimeCamper = (answers) => {
-//   return answers.reduce( (acc, current) => {
-//     if (current.response.toUpperCase().includes('first time camper'.toUpperCase()))
-//       return acc + 1
-//     return acc
-//   }, 0)
-// }
+const isFirstTimeCamper = (answers) => {
+  return answers.filter((answer) => {
+    if(answer.question.id === 1026308){
+      return answer
+    }
+  }).reduce((acc, current) => {
+    return current.response // need to reformat the return array
+  }, {})
+  .reduce( (acc, current) => {
+    if (current.toUpperCase().includes('first time camper'.toUpperCase()))
+      return acc + 1
+    return acc
+  }, 0)
+}
 
 //Call and get the regisration
 //https://api.tito.io/v2/an-account/awesome-conf/registrations/paul-awesomeconf-registration
