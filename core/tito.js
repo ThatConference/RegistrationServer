@@ -99,7 +99,7 @@ const remapIntoOrders = (tickets) => {
       isSponsor: false,
       isSpeaker: false,
       isSponsoredSpeaker: false,
-      tickets: []
+      tickets: [] // this has to be present for the ti.to webhook to work.
     }
 
     //Get a "unique" id
@@ -248,8 +248,10 @@ exports.checkIn = (ticket, checkInList) => {
   return new Promise((resolve, reject) => {
     const payload = mapCheckinPayload(ticket.titoTicketSlug, checkInList)
 
-    Logger.data(`Tito Checkin Payload = ${JSON.stringify(payload)}`)
-    Logger.data(`Tito Checkin Post Options = ${JSON.stringify(options)}`)
+    Logger.debug(`Payload`)
+    Logger.data(payload)
+    Logger.debug(`Post Options`)
+    Logger.data(options)
 
     options.body = payload
 
