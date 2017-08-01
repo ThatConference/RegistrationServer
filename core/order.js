@@ -12,35 +12,46 @@ exports.add = (database, registration) => {
     let uniqueTCIds = [] //will be used to store unique id's and validate later.
 
     for ( let ticket of registration.tickets ) {
-      let uniqueId = Helpers.createUniqueId()
+      //Check for a precon ticket
+      // they don't ask the same questions and will blow up.. We don't check them in.
+      if (ticket.release_id !== 1076976 ) { //precon ticket release id
+        let uniqueId = Helpers.createUniqueId()
 
-      while ( uniqueTCIds.includes(uniqueId) ) {
-        Logger.debug(`Found a tcID that wasn't unique. Trying again.`)
-        uniqueId = Helpers.createUniqueId()
+        while ( uniqueTCIds.includes(uniqueId) ) {
+          Logger.debug(`Found a tcID that wasn't unique. Trying again.`)
+          uniqueId = Helpers.createUniqueId()
+        }
+
+        uniqueTCIds.push(uniqueId)
+
+        let mappedTicket = remapTicket(newOrder.orderNumber, uniqueId, ticket)
+
+        newOrder.isSponsor = newOrder.isSponsor ? true : TitoHelpers().isSponsor(mappedTicket[`${ticket.reference}`].type)
+        newOrder.isSpeaker = newOrder.isSpeaker ? true : TitoHelpers().isSpeaker(mappedTicket[`${ticket.reference}`].type)
+        newOrder.isSponsoredSpeaker = newOrder.isSponsoredSpeaker ? true : TitoHelpers().isSponsoredSpeaker(mappedTicket[`${ticket.reference}`].type)
+
+        Object.assign(newOrder.tickets, mappedTicket)
       }
-
-      uniqueTCIds.push(uniqueId)
-
-      let mappedTicket = remapTicket(newOrder.orderNumber, uniqueId, ticket)
-
-      newOrder.isSponsor = newOrder.isSponsor ? true : TitoHelpers().isSponsor(mappedTicket[`${ticket.reference}`].type)
-      newOrder.isSpeaker = newOrder.isSpeaker ? true : TitoHelpers().isSpeaker(mappedTicket[`${ticket.reference}`].type)
-      newOrder.isSponsoredSpeaker = newOrder.isSponsoredSpeaker ? true : TitoHelpers().isSponsoredSpeaker(mappedTicket[`${ticket.reference}`].type)
-
-      Object.assign(newOrder.tickets, mappedTicket)
     }
 
     Logger.data(`New regisration mapped to: ${JSON.stringify(newOrder)}`)
 
-    database.addNewOrder(newOrder)
-      .then( (response) => {
-        Logger.info(`added ${JSON.stringify(response)}`)
-        resolve(`added ${newOrder.orderNumber}`)
-      })
-      .catch( (error) => {
-        Logger.error(`FAIL adding order # ${newOrder.orderNumber} : ${JSON.stringify(error)}`)
-        reject(`FAIL adding order # ${newOrder.orderNumber}`)
-      })
+    //check to see how many tickets are on the order.
+    //Have to have one to add it to the DB
+    if( Object.keys(newOrder.tickets).length > 0 ) {
+      database.addNewOrder(newOrder)
+        .then( (response) => {
+          Logger.info(`added ${JSON.stringify(response)}`)
+          resolve(`added ${newOrder.orderNumber}`)
+        })
+        .catch( (error) => {
+          Logger.error(`FAIL adding order # ${newOrder.orderNumber} : ${JSON.stringify(error)}`)
+          reject(`FAIL adding order # ${newOrder.orderNumber}`)
+        })
+    } else {
+      Logger.info(`ticket only contained precon tickets. Not added - ${newOrder.orderNumber}`)
+      resolve(`ticket only contained precon tickets. Not added - ${newOrder.orderNumber}`)
+    }
   })
 }
 
