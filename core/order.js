@@ -24,6 +24,7 @@ exports.add = (database, registration) => {
 
         uniqueTCIds.push(uniqueId)
 
+        Logger.debug(`remapping ticket # ${ticket.reference}`)
         let mappedTicket = remapTicket(newOrder.orderNumber, uniqueId, ticket)
 
         newOrder.isSponsor = newOrder.isSponsor ? true : TitoHelpers().isSponsor(mappedTicket[`${ticket.reference}`].type)
@@ -120,16 +121,24 @@ const hasDietaryRestrictions = (answers) => {
 }
 
 const isFirstTimeCamper = (answers) => {
-  return answers.filter((answer) => {
+  let result = 0
+
+  let answerFound = answers.filter((answer) => {
     if(answer.question.id === 1026308){
       return answer
     }
-  }).reduce((acc, current) => {
-    return current.response // need to reformat the return array
-  }, {})
-  .reduce( (acc, current) => {
-    if (current.toUpperCase().includes('first time camper'.toUpperCase()))
-      return acc + 1
-    return acc
-  }, 0)
+  })
+
+  if (answerFound.length > 0) {
+    result = answerFound.reduce((acc, current) => {
+      return current.response // need to reformat the return array
+    }, {})
+    .reduce( (acc, current) => {
+      if (current.toUpperCase().includes('first time camper'.toUpperCase()))
+        return acc + 1
+      return acc
+    }, 0)
+  }
+
+  return result
 }
