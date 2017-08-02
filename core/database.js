@@ -42,10 +42,12 @@ const Database = (database) => {
       const orderPath = `Orders/${order.orderNumber}`
       database.ref(orderPath).once('value')
         .then((snapshot) => {
-          logger.debug(`snapshot returned = ${snapshot.val()}`)
+          logger.debug(`snapshot returned:}`)
+          logger.data(snapshot.val())
 
           if(snapshot.val() === null) {
-            logger.debug(`Did not find order at ${orderPath}. creating.`)
+            logger.debug(`Did not find an order at ${orderPath}. creating order...`)
+            logger.data(order)
 
             database.ref(`Orders/${order.orderNumber}`).set(order, (error) => {
               if(error)

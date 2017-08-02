@@ -8,6 +8,7 @@ const registrationDateCutoff = Moment(process.env.LATE_REGISTRATION_DATE, 'YYYY-
 exports.add = (database, registration) => {
   return new Promise((resolve, reject) => {
 
+    Logger.trace(`mapping order for # ${registration.reference}`)
     let newOrder = createOrder(registration)
     let uniqueTCIds = [] //will be used to store unique id's and validate later.
 
@@ -35,11 +36,14 @@ exports.add = (database, registration) => {
       }
     }
 
-    Logger.data(`New regisration mapped to: ${JSON.stringify(newOrder)}`)
+    Logger.debug(`New registration mapped to:`)
+    Logger.data(newOrder)
 
     //check to see how many tickets are on the order.
     //Have to have one to add it to the DB
     if( Object.keys(newOrder.tickets).length > 0 ) {
+      Logger.debug(`Order contained ${Object.keys(newOrder.tickets).length} tickets, adding or updating db`)
+
       database.addNewOrder(newOrder)
         .then( (response) => {
           Logger.info(`added ${JSON.stringify(response)}`)
