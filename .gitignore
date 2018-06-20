@@ -44,3 +44,9 @@ jspm_packages
 
 # vim
 **/*.swp
+
+# vscode
+.vscode
+
+#private stuff
+private
