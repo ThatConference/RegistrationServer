@@ -11,18 +11,18 @@
   "dependencies": {
     "dotenv": "^4.0.0",
     "firebase": "^3.9.0",
-    "firebase-admin": "^5.0.1",
+    "firebase-admin": "^5.12.1",
     "firebase-queue": "^1.6.1",
-    "hapi": "^16.4.3",
-    "moment": "^2.18.1",
+    "hapi": "^16.6.3",
+    "moment": "^2.22.2",
     "request": "^2.81.0",
-    "request-promise": "^4.2.1",
-    "request-promise-native": "^1.0.4",
+    "request-promise": "^4.2.2",
+    "request-promise-native": "^1.0.5",
     "winston": "^2.3.1"
   },
   "devDependencies": {
     "standard": "^9.0.1",
-    "tap": "^10.7.0"
+    "tap": "^10.7.3"
   },
   "scripts": {
     "start": "node ./server.js",

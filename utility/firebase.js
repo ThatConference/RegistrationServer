@@ -11,6 +11,6 @@ const firebaseConfig = {
   messagingSenderId: process.env.MESSAGING_SENDER_ID || '<ID>'
 }
 
-Firebase.initializeApp(firebaseConfig)
+Admin.initializeApp(firebaseConfig)
 
-module.exports = Firebase.database()
+module.exports = Admin.database()
