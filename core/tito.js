@@ -207,6 +207,7 @@ const createOrderMap = (orders) => {
 const updateOrderMap = (orderMap, registrations) => {
 
   for (let reg of registrations) {
+    
     const key = reg.attributes.reference
     if (orderMap.has(key)){
       let order = orderMap.get(key)
@@ -214,7 +215,7 @@ const updateOrderMap = (orderMap, registrations) => {
       order.name = reg.attributes.name
       order.email = reg.attributes.email
       order.phoneNumber = reg.attributes["phone-number"]
-      order.company = reg.attributes["billing-address"]["company-name"]
+      order.company = reg.attributes["billing-address"]["company-name"] === undefined ? '' : reg.attributes["billing-address"]["company-name"]
       order.completedAt = reg.attributes["completed-at"]
       order.isLateRegistration = Moment(reg.attributes['completed-at']).isAfter(registrationDateCutoff),
 
