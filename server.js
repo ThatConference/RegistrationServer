@@ -10,11 +10,8 @@ const queueListener = require('./core/queueListener')
 // start the queue listeners
 queueListener(firebase)
 
-const server = new Hapi.Server()
 const port = Number(process.env.PORT || 8000)
-server.connection({
-  port: port
-})
+const server = new Hapi.Server({port: port})
 
 // Register our routes
 server.route(require('./routes')(database(firebase)))
