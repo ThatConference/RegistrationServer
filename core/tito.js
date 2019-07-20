@@ -211,8 +211,8 @@ const addToDB = (orderMap, database) => {
   database.add(orderMap)
 }
 
-exports.seed = (database, reply) => {
-  return populateDB(database, reply)
+exports.seed = (database, h) => {
+  return populateDB(database, h)
 }
 
 exports.checkIn = (ticket, checkInList) => {
