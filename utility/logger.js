@@ -14,15 +14,33 @@ const colors = {
   error: 'red'
 }
 
+const levels = {
+  error: 0,
+  warn: 1,
+  help: 2,
+  data: 3,
+  info: 4,
+  debug: 5,
+  prompt: 6,
+  verbose: 7,
+  input: 8,
+  trace: 9
+}
+
 addColors(colors);
 
 const logger = createLogger({
+  levels: levels,
   format: combine(
     timestamp(),
     prettyPrint(),
     colorize({all: true})
   ),
-  transports: [new transports.Console()]
+  transports: [
+    new (transports.Console)({
+      level : 'trace'
+    }),
+  ],
 })
 
 module.exports = logger
