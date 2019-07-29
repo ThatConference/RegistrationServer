@@ -9,20 +9,20 @@
     "node": ">=8"
   },
   "dependencies": {
-    "dotenv": "^4.0.0",
-    "firebase": "^3.9.0",
-    "firebase-admin": "^5.12.1",
+    "dotenv": "^8.0.0",
+    "firebase": "^6.2.4",
+    "firebase-admin": "^8.2.0",
     "firebase-queue": "^1.6.1",
-    "hapi": "^16.6.3",
-    "moment": "^2.22.2",
-    "request": "^2.81.0",
-    "request-promise": "^4.2.2",
-    "request-promise-native": "^1.0.5",
-    "winston": "^2.3.1"
+    "hapi": "^18.1.0",
+    "moment": "^2.24.0",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.4",
+    "request-promise-native": "^1.0.7",
+    "winston": "^3.2.1"
   },
   "devDependencies": {
-    "standard": "^9.0.1",
-    "tap": "^10.7.3"
+    "standard": "^12.0.1",
+    "tap": "^14.4.1"
   },
   "scripts": {
     "start": "node ./server.js",

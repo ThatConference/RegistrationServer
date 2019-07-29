@@ -7,15 +7,15 @@ const logger = require('../utility/logger')
     then we rely on the webhook to populate from that point onward.
 */
 exports.seed = (database) => {
-  return function (request, reply) {
+  return function (request, h) {
     logger.info('Tito Seed Called')
-    tito.seed(database, reply)
+    return tito.seed(database, h)
   }
 }
 
 //Called by the tito webhook.
 exports.addOrder = (database) => {
-  return function (request, reply) {
+  return function (request, h) {
     let ticket = typeof request.payload === 'string'
       ? JSON.parse(request.payload) : request.payload
 
@@ -24,11 +24,11 @@ exports.addOrder = (database) => {
     order.add(database, ticket)
       .then( (response) => {
         logger.info(`response: ${response}`)
-        reply(response).code(201)
+        return h.response(response).code(201)
       })
       .catch( (error) => {
         logger.error(error)
-        reply(error).code(400)
+        return h.response(error).code(400)
       })
   }
 }

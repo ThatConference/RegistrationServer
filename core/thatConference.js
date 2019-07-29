@@ -120,6 +120,6 @@ const mapTicketToPayload = (order, ticket) => {
     LastName: ticket.lastName || order.name.split(' ')[1] || 'Not Supplied',  //required
     Email: ticket.email || order.email, //required
     CompanyName: ticket.companyName || order.company,
-    Year: 2018
+    Year: 2019
   }
 }

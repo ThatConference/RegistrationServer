@@ -23,7 +23,6 @@ async function getCheckInTickets(){
   options.url = `https://${process.env.TITO_API_V1_HOST}/${process.env.TITO_CHECKIN_LIST_URI}/${process.env.TITO_CHECKIN_LIST_ID}`
   Logger.info(`Calling tito to get check in list, ${options.url}`)
   let checkinListMeta = JSON.parse(await Request.get(options))
-
   let tickets = []
 
   for (i = 1; i <= checkinListMeta.total_pages; i++) {
@@ -40,29 +39,11 @@ async function getTitoRegistrations() {
   options.url = `https://${process.env.TITO_API_HOST}/${process.env.TITO_API_PATH}/registrations`
   Logger.info(`Calling tito to get registrations, ${options.url}`)
   return JSON.parse(await Request.get(options)).data
-
-  // return new Promise((resolve, reject) => {
-  //   Request.get(options, (error, response, body) => {
-  //     if(error){
-  //       console.log(error)
-  //       reject()
-  //     }
-  //     if(response.statusCode != 200 ){
-  //       Logger.error(`status code: ${response.statusCode}`)
-  //       reject()
-  //     }
-  //     console.log(body)
-  //     //JSON.parse(body).data
-  //     //resolve()
-  //     reject()
-  //   })
-  //
-  // })
 }
 
-async function populateDB ( database, reply ) {
+async function populateDB ( database ) {
   let replyResult = {}
-  let [checkInList, regList] = await Promise.all([getCheckInTickets(), getTitoRegistrations()]) // no catching failed promise...
+  let [checkInList, regList] = await Promise.all([getCheckInTickets(), getTitoRegistrations()]) // no catching failed
 
   Logger.info(`Tito returned ${checkInList.length} tickets on the checkin list`)
   Logger.info(`Tito returned ${regList.length} registrations`)
@@ -84,7 +65,7 @@ async function populateDB ( database, reply ) {
   addToDB(finalOrders, database)
 
   replyResult.status = 'success'
-  reply(replyResult)
+  return replyResult
 }
 
 const remapIntoOrders = (tickets) => {
@@ -230,8 +211,8 @@ const addToDB = (orderMap, database) => {
   database.add(orderMap)
 }
 
-exports.seed = (database, reply) => {
-  populateDB(database, reply)
+exports.seed = (database, h) => {
+  return populateDB(database, h)
 }
 
 exports.checkIn = (ticket, checkInList) => {

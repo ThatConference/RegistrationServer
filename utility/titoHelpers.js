@@ -36,10 +36,8 @@ const titoHelper = () => {
 
 
     //adjust for lack of availability from vendor
-    if (shirt.toUpperCase().includes('Youth XS'.toUpperCase()))
-      newShirt = 'Youth S     [6-8]' // hardcoded based on what is in tito, has to match
-    if (shirt.toUpperCase().includes('Women\'s-cut 4X-Large'.toUpperCase()))
-      newShirt = 'Men 4X-Large' // hardcoded based on what is in tito, has to match
+    if (shirt.toUpperCase().includes('Youth XL'.toUpperCase()))
+      newShirt = 'Men X-Small' // hardcoded based on what is in tito, has to match
 
     return newShirt
   }
